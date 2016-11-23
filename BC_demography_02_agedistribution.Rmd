@@ -1,0 +1,162 @@
+---
+title: "BC_demography_02_agedistribution"
+author: "Martin Monkman"
+date: "February 14, 2016"
+output: html_document
+---
+
+## Plot the age distribution in British Columbia, 1971-2015
+
+### data
+
+Source:
+Statistics Canada, CANSIM 
+[Table 051-0001: Estimates of population, by age group and sex for July 1, Canada, provinces and territories annual](http://www5.statcan.gc.ca/cansim/a26?lang=eng&retrLang=eng&id=0510001&&pattern=&stByVal=1&p1=1&p2=37&tabMode=dataTable&csid=)
+
+The source file contains population for Canada, the provinces and territories, by age (and age group), and by sex, for the years 1976-2016 (as of this writing).
+
+Source file:  (./data_source/cansim-0510001-eng-8333626124709750278.csv)
+
+
+The CANSIM extract requires some carpentry to be useful for the purposes of this plotting. The tidied version becomes a data frame `data_agedistrib01`.
+
+**Notes:** 
+
+1. The table originally tabulated the last category as "90 years and over"; starting with 2001 this category was expanded to single years 90 through 99, and a "100 years and over" category was added. Depending on the year(s) of interest, the treatment of the extreme category will vary. 
+
+2. The extreme age categories appear for all years, but are empty values. These lead to "parsing failures" when reading the source .csv file.
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# load the necessary packages
+# data manipulation
+library(readr)
+library(tidyr)
+library(dplyr)
+# graphics
+library(ggplot2)
+library(scales)
+# tables
+library(xtable)
+# install necessary packages
+# utilities
+library(zoo)
+
+
+# PLOTTING ESSENTIALS
+
+# create a chart theme & colour palette for use in ggplot2
+# this theme is the basic background for a BC Stats chart
+#
+theme_BCStats <- 
+  theme_bw() +
+  theme(
+    panel.border = element_rect(colour="white"),
+    axis.line = element_line(colour="black"),
+    legend.position=c(1,0), 
+    legend.justification=c(1,0),
+    legend.title = element_text(size=12),
+    legend.text = element_text(size=11),
+    axis.title = element_text(size=16),
+    axis.text = element_text(size=16),
+    plot.title = element_text(size=18)
+  )
+#
+
+# colour palette for BC Stats charts (use with scale_colour_manual)
+palette_BCStats <- c("#234275", "#E3A82B", "#26BDEF", "#11CC33", "#D3E2ED", "8A8A8A")
+
+# grayscale for fill (use with scale_fill_manual)
+palette_BCStats_fill <- c("#3F3F3F", "#ABABAB", "#DFDFDF", "#969696", "#838383", "8A8A8A")
+
+
+
+```
+
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# read the data
+setwd("C:/@data/GitHub/BC_demography")
+#
+
+data_agedistrib <- read_csv("./data_source/00510001-eng.csv")
+
+ls.str(data_agedistrib01)
+
+unique(data_agedistrib$AGE)
+unique(data_agedistrib$GEO)
+unique(data_agedistrib$Ref_Date)
+unique(data_agedistrib$SEX)
+
+# -------------------------------------
+
+# filter for British Columbia, both sexes, 2016 distribution
+
+data_agedistrib01 <- data_agedistrib %>%
+  filter(GEO == "British Columbia") %>%
+  filter(Ref_Date == "2016") %>%
+  filter(SEX == "Both sexes")
+
+unique(data_agedistrib01$AGE)
+unique(data_agedistrib01$GEO)
+unique(data_agedistrib01$Ref_Date)
+unique(data_agedistrib01$SEX)
+
+
+drop.age.vals <- c("All ages", "0 to 4 years", "5 to 9 years",
+                   "10 to 14 years", "15 to 19 years", 
+                   "20 to 24 years", "25 to 29 years", 
+                   "30 to 34 years", "35 to 39 years", 
+                   "40 to 44 years", "45 to 49 years", 
+                   "50 to 54 years", "55 to 59 years", 
+                   "60 to 64 years", "65 to 69 years", 
+                   "70 to 74 years", "75 to 79 years", 
+                   "80 to 84 years", "85 to 89 years", 
+                   "90 to 94 years", "95 to 99 years",
+                   "0 to 14 years", "0 to 15 years", "0 to 16 years", "0 to 17 years",
+                   "15 to 49 years", "15 to 64 years", "16 to 64 years", "17 to 64 years",
+                   "18 years and over", "18 to 64 years", "18 to 24 years", "25 to 44 years",
+                   "45 to 64 years", "65 years and over", "90 years and over", 
+                   "Median age (years)")
+
+# filter out the values
+data_agedistrib01 <- data_agedistrib01 %>%
+  filter(!AGE %in% drop.age.vals)
+
+# check the list again
+unique(data_agedistrib01$AGE)
+
+
+# create a new variable age.num that converts the age variable to an integer 
+# (instead of a string that has " year" AND no padding, so an alpha sort will yield inappropriate results)
+# step 1: use gsub to replace " years" (and its variants) with blank in string
+# step 2: set as.integer
+data_agedistrib01$age.num <- gsub(" years", "", data_agedistrib01$AGE)
+data_agedistrib01$age.num <- gsub(" year", "", data_agedistrib01$age.num)
+data_agedistrib01$age.num <- as.integer(gsub(" and over", "", data_agedistrib01$age.num))
+
+unique(data_agedistrib01$age.num)
+
+
+```
+
+### Basic plot
+
+```{r}
+
+# basic
+ggplot(data_agedistrib01, aes(x=age.num, y=Value)) +
+  geom_bar(stat="identity", fill="#234275")
+
+
+
+```
+
+
+
+
+
+-30-
