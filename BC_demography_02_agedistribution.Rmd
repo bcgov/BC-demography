@@ -5,7 +5,7 @@ date: "February 14, 2016"
 output: html_document
 ---
 
-## Plot the age distribution in British Columbia, 1971-2015
+## Plot the age distribution in British Columbia, 1971-2016
 
 ### data
 
@@ -18,7 +18,7 @@ The source file contains population for Canada, the provinces and territories, b
 Source file:  (./data_source/cansim-0510001-eng-8333626124709750278.csv)
 
 
-The CANSIM extract requires some carpentry to be useful for the purposes of this plotting. The tidied version becomes a data frame `data_agedistrib01`.
+The CANSIM extract requires some carpentry to be useful for the purposes of this plotting. The tidied version becomes a data frame `data_agedistrib_BC_2016`.
 
 **Notes:** 
 
@@ -79,12 +79,12 @@ palette_BCStats_fill <- c("#3F3F3F", "#ABABAB", "#DFDFDF", "#969696", "#838383",
 ```{r, echo=FALSE, message=FALSE}
 
 # read the data
-setwd("C:/@data/GitHub/BC_demography")
+setwd("C:/@data/GitHub/BC-demography")
 #
 
 data_agedistrib <- read_csv("./data_source/00510001-eng.csv")
 
-ls.str(data_agedistrib01)
+ls.str(data_agedistrib)
 
 unique(data_agedistrib$AGE)
 unique(data_agedistrib$GEO)
@@ -95,18 +95,21 @@ unique(data_agedistrib$SEX)
 
 # filter for British Columbia, both sexes, 2016 distribution
 
-data_agedistrib01 <- data_agedistrib %>%
+data_agedistrib_BC_2016 <- data_agedistrib %>%
+  select(GEO, Ref_Date, SEX, AGE,  Value) %>%
   filter(GEO == "British Columbia") %>%
   filter(Ref_Date == "2016") %>%
   filter(SEX == "Both sexes")
 
-unique(data_agedistrib01$AGE)
-unique(data_agedistrib01$GEO)
-unique(data_agedistrib01$Ref_Date)
-unique(data_agedistrib01$SEX)
+ls.str(data_agedistrib_BC_2016)
+
+unique(data_agedistrib_BC_2016$AGE)
+unique(data_agedistrib_BC_2016$GEO)
+unique(data_agedistrib_BC_2016$Ref_Date)
+unique(data_agedistrib_BC_2016$SEX)
 
 
-drop.age.vals <- c("All ages", "0 to 4 years", "5 to 9 years",
+drop.age.vals_2 <- c("All ages", "0 to 4 years", "5 to 9 years",
                    "10 to 14 years", "15 to 19 years", 
                    "20 to 24 years", "25 to 29 years", 
                    "30 to 34 years", "35 to 39 years", 
@@ -123,39 +126,229 @@ drop.age.vals <- c("All ages", "0 to 4 years", "5 to 9 years",
                    "Median age (years)")
 
 # filter out the values
-data_agedistrib01 <- data_agedistrib01 %>%
-  filter(!AGE %in% drop.age.vals)
+data_agedistrib_BC_2016 <- data_agedistrib_BC_2016 %>%
+  filter(!AGE %in% drop.age.vals_2)
 
 # check the list again
-unique(data_agedistrib01$AGE)
+unique(data_agedistrib_BC_2016$AGE)
 
 
 # create a new variable age.num that converts the age variable to an integer 
 # (instead of a string that has " year" AND no padding, so an alpha sort will yield inappropriate results)
 # step 1: use gsub to replace " years" (and its variants) with blank in string
 # step 2: set as.integer
-data_agedistrib01$age.num <- gsub(" years", "", data_agedistrib01$AGE)
-data_agedistrib01$age.num <- gsub(" year", "", data_agedistrib01$age.num)
-data_agedistrib01$age.num <- as.integer(gsub(" and over", "", data_agedistrib01$age.num))
+data_agedistrib_BC_2016$age.num <- gsub(" years", "", data_agedistrib_BC_2016$AGE)
+data_agedistrib_BC_2016$age.num <- gsub(" year", "", data_agedistrib_BC_2016$age.num)
+data_agedistrib_BC_2016$age.num <- as.integer(gsub(" and over", "", data_agedistrib_BC_2016$age.num))
 
-unique(data_agedistrib01$age.num)
+unique(data_agedistrib_BC_2016$age.num)
+
+# calculate percentage of total population for each age group
+data_agedistrib_BC_2016 <- data_agedistrib_BC_2016 %>%
+  mutate(year_pct = (Value / sum(Value) * 100)) 
 
 
 ```
 
-### Basic plot
+### Plot: age distribution, British Columbia 2016
+
+This set of charts shows the distribution of the B.C. population, by one year age groups.
+
+The first group shows the absolute number of people, and the second shows the percentage of the population in each group (useful for comparisons across time).
+
+
+The first version of the plot is a basic version. The second version adds an assortment of formatting:
+
+* axis length and grid specifications
+* axis titles
+* chart title, subtitle, and source
+
+Note that the X axis scale is such that it follows the five year increments of the Census of Canada.
+
+
 
 ```{r}
 
 # basic
-ggplot(data_agedistrib01, aes(x=age.num, y=Value)) +
+plot_agedist_BC_2016 <- ggplot(data_agedistrib_BC_2016, aes(x=age.num, y=Value)) +
   geom_bar(stat="identity", fill="#234275")
 
+plot_agedist_BC_2016
+
+
+# Add formatting
+
+plot_agedist_BC_2016 <- plot_agedist_BC_2016 +
+  theme_BCStats +
+  scale_colour_manual(values=palette_BCStats) +
+  labs(title = "British Columbia, Age distribution, 2016",
+       y = "population", x = NULL,
+       caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
+  scale_x_continuous(breaks = seq(0, 100, 10)) +
+#  scale_x_discrete(breaks = c("10", "20", "30", "40", "50", 
+#                              "60", "70", "80", "90", "100+")) +
+  scale_y_continuous(limits = c(0, 80000), breaks = seq(0, 80000, by = 10000),
+                     labels = comma)
+
+plot_agedist_BC_2016
+
+# save the plot as a png file
+png("plot_agedist_BC_2016.png", width=1024, height=768, res=120)
+plot(plot_agedist_BC_2016)
+dev.off()
+  
+```
+
+
+Repeat, but with percentage
+
+```{r}
+
+# basic
+plot_agedist_BC_2016_pct <- ggplot(data_agedistrib_BC_2016, aes(x=age.num, y=year_pct)) +
+  geom_bar(stat="identity", fill="#234275")
+
+plot_agedist_BC_2016_pct
+
+
+# Add formatting
+
+plot_agedist_BC_2016_pct <- plot_agedist_BC_2016_pct +
+  theme_BCStats +
+  scale_colour_manual(values=palette_BCStats) +
+  labs(title = "British Columbia, Age distribution, 2016",
+       y = "percent of population", x = NULL,
+       caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
+  scale_x_continuous(breaks = seq(0, 100, 10)) +
+  scale_y_continuous(limits = c(0, 2.5), breaks = seq(0, 2.5, by = 0.5)) 
+
+plot_agedist_BC_2016_pct
+
+
+# save the plot as a png file
+png("plot_agedist_BC_2016_pct.png", width=1024, height=768, res=120)
+plot(plot_agedist_BC_2016_pct)
+dev.off()
+  
+```
+
+
+```{r}
+
+# highlight the boomers
+
+plot_agedist_BC_2016_shade <- plot_agedist_BC_2016 +
+  # add shaded rectangle for the projection range
+  annotate("rect", xmin=50, xmax=70, ymin=0, ymax=80000, alpha=0.1, fill="blue") +
+  annotate("text", x=60, y=77000,  label="Boomers")
+
+plot_agedist_BC_2016_shade
 
 
 ```
 
 
+The total population of British Columbia has increased from 2.2 million in 1971 to 4.7 million in 2015. The population surpassed 3 million in 1986, and 4 million in 1999.
+
+#### Density Plot
+
+An effective way to compare the distribution of the population.
+
+First, create a cleaned up version of the data for 1971.
+
+Note that the age categories are different than those used for 2016!
+
+```{r}
+# filter for British Columbia, both sexes, 1971 distribution
+
+data_agedistrib_BC_1971 <- data_agedistrib %>%
+  select(GEO, Ref_Date, SEX, AGE,  Value) %>%
+  filter(GEO == "British Columbia") %>%
+  filter(Ref_Date == "1971") %>%
+  filter(SEX == "Both sexes")
+
+ls.str(data_agedistrib_BC_1971)
+
+unique(data_agedistrib_BC_1971$AGE)
+unique(data_agedistrib_BC_1971$GEO)
+unique(data_agedistrib_BC_1971$Ref_Date)
+unique(data_agedistrib_BC_1971$SEX)
+
+
+drop.age.vals_1 <- c("All ages", "0 to 4 years", "5 to 9 years",
+                   "10 to 14 years", "15 to 19 years", 
+                   "20 to 24 years", "25 to 29 years", 
+                   "30 to 34 years", "35 to 39 years", 
+                   "40 to 44 years", "45 to 49 years", 
+                   "50 to 54 years", "55 to 59 years", 
+                   "60 to 64 years", "65 to 69 years", 
+                   "70 to 74 years", "75 to 79 years", 
+                   "80 to 84 years", "85 to 89 years", 
+                   "90 to 94 years", "95 to 99 years",
+                   "0 to 14 years", "0 to 15 years", "0 to 16 years", "0 to 17 years",
+                   "15 to 49 years", "15 to 64 years", "16 to 64 years", "17 to 64 years",
+                   "18 years and over", "18 to 64 years", "18 to 24 years", "25 to 44 years",
+                   "45 to 64 years", "65 years and over", 
+#                   "90 years and over", 
+#                   "100 years and over", 
+                   "Median age (years)")
+
+drop.age.vals_1
+
+# filter out the values
+data_agedistrib_BC_1971 <- data_agedistrib_BC_1971 %>%
+  filter(!AGE %in% drop.age.vals_1)
+
+# check the list again
+unique(data_agedistrib_BC_1971$AGE)
+
+
+# create a new variable age.num that converts the age variable to an integer 
+# (instead of a string that has " year" AND no padding, so an alpha sort will yield inappropriate results)
+# step 1: use gsub to replace " years" (and its variants) with blank in string
+# step 2: set as.integer
+data_agedistrib_BC_1971$age.num <- gsub(" years", "", data_agedistrib_BC_1971$AGE)
+data_agedistrib_BC_1971$age.num <- gsub(" year", "", data_agedistrib_BC_1971$age.num)
+data_agedistrib_BC_1971$age.num <- as.integer(gsub(" and over", "", data_agedistrib_BC_1971$age.num))
+
+unique(data_agedistrib_BC_1971$age.num)
+
+# calculate percentage of total population for each age group
+data_agedistrib_BC_1971 <- data_agedistrib_BC_1971 %>%
+  mutate(year_pct = (Value / sum(Value) * 100)) 
+
+
+```
+
+Merge 1971 data frame with 2016
+
+```{r}
+
+data_agedistrib_BC_19712016 <- rbind(data_agedistrib_BC_1971, data_agedistrib_BC_2016)
+
+ls.str(data_agedistrib_BC_19712016)
+unique(data_agedistrib_BC_19712016$age.num)
+
+```
+
+
+Plot
+
+```{r}
+
+plot_agedistrib_BC_19712016 <- 
+  ggplot(data_agedistrib_BC_19712016, aes(x=age.num, fill=Ref_Date)) +
+  geom_density(alpha = 0.25)
+
+plot_agedistrib_BC_19712016
+
+
+ggplot(data_agedistrib_BC_19712016, aes(x=age.num, fill=Ref_Date)) +
+  geom_density()
+
+
+
+```
 
 
 
