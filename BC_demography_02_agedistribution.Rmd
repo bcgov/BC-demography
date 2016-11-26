@@ -187,7 +187,7 @@ plot_agedist_BC_2016 <- plot_agedist_BC_2016 +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
 #  scale_x_discrete(breaks = c("10", "20", "30", "40", "50", 
 #                              "60", "70", "80", "90", "100+")) +
-  scale_y_continuous(limits = c(0, 80000), breaks = seq(0, 80000, by = 10000),
+  scale_y_continuous(limits = c(0, 90000), breaks = seq(0, 90000, by = 10000),
                      labels = comma)
 
 plot_agedist_BC_2016
@@ -220,7 +220,7 @@ plot_agedist_BC_2016_pct <- plot_agedist_BC_2016_pct +
        y = "percent of population", x = NULL,
        caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
-  scale_y_continuous(limits = c(0, 2.5), breaks = seq(0, 2.5, by = 0.5)) 
+  scale_y_continuous(limits = c(0, 2.25), breaks = seq(0, 2.0, by = 0.5)) 
 
 plot_agedist_BC_2016_pct
 
@@ -239,11 +239,16 @@ dev.off()
 
 plot_agedist_BC_2016_shade <- plot_agedist_BC_2016 +
   # add shaded rectangle for the projection range
-  annotate("rect", xmin=50, xmax=70, ymin=0, ymax=80000, alpha=0.1, fill="blue") +
+  annotate("rect", xmin=50, xmax=70, ymin=0, ymax=90000, alpha=0.1, fill="blue") +
   annotate("text", x=60, y=77000,  label="Boomers")
 
 plot_agedist_BC_2016_shade
 
+# save the plot as a png file
+png("plot_agedist_BC_2016_shade.png", width=1024, height=768, res=120)
+plot(plot_agedist_BC_2016_shade)
+dev.off()
+  
 
 ```
 
@@ -373,7 +378,10 @@ ggplot(data_agedistrib_BC_2016, aes(x=age.num, y=Value)) +
 # combined plot: absolute
 plot_smooth_years <- ggplot(data_agedistrib_BC_2016, aes(x=age.num, y=Value)) +
   geom_smooth(span = 0.3, se = FALSE, colour = "#234275") +
-  geom_smooth(data = data_agedistrib_BC_1971, span = 0.3, se = FALSE, colour = "#E3A82B")
+  geom_smooth(data = data_agedistrib_BC_1971, span = 0.3, se = FALSE, colour = "#E3A82B") +
+  annotate("text", x=55, y=73000, label = "2016", colour =  "#234275", fontface = 2) +
+  annotate("text", x=40, y=24000, label = "1971", colour =  "#234275", fontface = 2)
+
 
 plot_smooth_years <- plot_smooth_years +
   theme_BCStats +
@@ -382,7 +390,7 @@ plot_smooth_years <- plot_smooth_years +
        y = "population", x = NULL,
        caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
-  scale_y_continuous(limits = c(0, 80000), breaks = seq(0, 80000, by = 10000),
+  scale_y_continuous(limits = c(0, 90000), breaks = seq(0, 90000, by = 10000),
                      labels = comma)
 
 plot_smooth_years
@@ -402,16 +410,170 @@ dev.off()
 # combined plot: percentage
 plot_smooth_pct <- ggplot(data_agedistrib_BC_2016, aes(x=age.num, y=year_pct)) +
   geom_smooth(span = 0.3, se = FALSE, colour = "#234275") +
-  geom_smooth(data = data_agedistrib_BC_1971, span = 0.3, se = FALSE, colour = "#E3A82B")
+  geom_smooth(data = data_agedistrib_BC_1971, span = 0.3, se = FALSE, colour = "#E3A82B") +
+  annotate("text", x=55, y=1.6, label = "2016", colour =  "#234275", fontface = 2) +
+  annotate("text", x=10, y=2.1, label = "1971", colour =  "#234275", fontface = 2)
+  
 
-plot_smooth_pct +
+plot_smooth_pct <- plot_smooth_pct +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
   labs(title = "British Columbia, Age distribution, 1971 & 2016",
        y = "percent of population", x = NULL,
        caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
-  scale_y_continuous(limits = c(0, 2.5), breaks = seq(0, 2.5, by = 0.5)) 
+  scale_y_continuous(limits = c(0, 2.25), breaks = seq(0, 2.0, by = 0.5)) 
+  
+plot_smooth_pct
+
+# save the plot as a png file
+png("plot_smooth_pct.png", width=1024, height=768, res=120)
+plot(plot_smooth_pct)
+dev.off()
+  
+
+```
+
+
+## Add 2041 projection to smoothed curve plots
+
+#### read the data
+
+```{r}
+
+data_BC_projection <- read_csv("./data_source/Project_Inputs_TBS_Proj1607_5_single-all.csv")
+
+ls.str(data_BC_projection)
+
+unique(data_BC_projection$Age)
+unique(data_BC_projection$Sex)
+unique(data_BC_projection$Year)
+
+data_BC_projection %>%
+  group_by(Sex) %>%
+  count()
+
+# delete rows where Sex==NA
+
+data_BC_projection <- data_BC_projection %>%
+  na.omit()
+
+data_BC_projection %>%
+  group_by(Sex) %>%
+  count()
+
+unique(data_BC_projection$Age)
+unique(data_BC_projection$Sex)
+unique(data_BC_projection$Year)
+
+
+# clean up age categories
+data_BC_projection$age.num <- as.integer(data_BC_projection$Age) 
+data_BC_projection$age.num[data_BC_projection$Age == "100+"] <- 100 
+
+data_BC_projection %>%
+  group_by(Sex) %>%
+  count()
+
+  
+
+unique(data_BC_projection$age.num)
+
+ls.str(data_BC_projection)
+
+data_agedistrib_BC_2041 <- data_BC_projection %>%
+#  select(GEO, Ref_Date, SEX, AGE,  Value) %>%
+  filter(Year == "2041") %>%
+  group_by(age.num) %>%
+  summarise(Value = sum(Population))
+
+ls.str(data_agedistrib_BC_2041)
+
+
+# calculate percentage of total population for each age group
+data_agedistrib_BC_2041 <- data_agedistrib_BC_2041 %>%
+  mutate(year_pct = (Value / sum(Value) * 100)) 
+
+ls.str(data_agedistrib_BC_2041)
+
+```
+
+
+#### Plot
+
+
+```{r}
+
+plot_agedist_BC_2041 <- ggplot(data_agedistrib_BC_2041, aes(x=age.num, y=Value)) +
+  geom_bar(stat="identity", fill="#234275")
+
+plot_agedist_BC_2041
+  
+
+ggplot(data_agedistrib_BC_2041, aes(x=age.num, y=Value)) +
+  geom_bar(stat="identity", fill="#234275") +
+  geom_smooth(span = 0.25, se = FALSE)
+  
+  
+
+
+# combined plot: absolute
+plot_smooth_years2 <- ggplot(data_agedistrib_BC_2016, aes(x=age.num, y=Value)) +
+  geom_smooth(span = 0.25, se = FALSE, colour = "#234275") +
+  geom_smooth(data = data_agedistrib_BC_1971, span = 0.25, se = FALSE, colour = "#E3A82B") +
+  geom_smooth(data = data_agedistrib_BC_2041, span = 0.25, se = FALSE, colour = "#26BDEF") +
+  annotate("text", x=36, y=82000, label = "2041", colour =  "#234275", fontface = 2) +
+  annotate("text", x=40, y=59000, label = "2016", colour =  "#234275", fontface = 2) +
+  annotate("text", x=40, y=24000, label = "1971", colour =  "#234275", fontface = 2)
+
+plot_smooth_years2
+
+plot_smooth_years2 <- plot_smooth_years2 +
+  theme_BCStats +
+  scale_colour_manual(values=palette_BCStats) +
+  labs(title = "British Columbia, Age distribution, 1971 & 2016",
+       y = "population", x = NULL,
+       caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
+  scale_x_continuous(breaks = seq(0, 100, 10)) +
+  scale_y_continuous(limits = c(0, 90000), breaks = seq(0, 90000, by = 10000),
+                     labels = comma)
+
+plot_smooth_years2
+
+# save the plot as a png file
+png("plot_smooth_years2.png", width=1024, height=768, res=120)
+plot(plot_smooth_years2)
+dev.off()
+  
+
+
+
+# combined plot: percentage distribution
+
+plot_smooth_pct2 <- ggplot(data_agedistrib_BC_2016, aes(x=age.num, y=year_pct)) +
+  geom_smooth(span = 0.3, se = FALSE, colour = "#234275") +
+  geom_smooth(data = data_agedistrib_BC_1971, span = 0.3, se = FALSE, colour = "#E3A82B") +
+  geom_smooth(data = data_agedistrib_BC_2041, span = 0.3, se = FALSE, colour = "#26BDEF") +
+  annotate("text", x=84, y=1.0, label = "2041", colour =  "#234275", fontface = 2) +
+  annotate("text", x=12, y=1.25, label = "2016", colour =  "#234275", fontface = 2) +
+  annotate("text", x=10, y=2.05, label = "1971", colour =  "#234275", fontface = 2)
+  
+
+plot_smooth_pct2 <- plot_smooth_pct2 +
+  theme_BCStats +
+  scale_colour_manual(values=palette_BCStats) +
+  labs(title = "British Columbia, Age distribution, 1971 & 2016",
+       y = "percent of population", x = NULL,
+       caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
+  scale_x_continuous(breaks = seq(0, 100, 10)) +
+  scale_y_continuous(limits = c(0, 2.25), breaks = seq(0, 2.0, by = 0.5)) 
+  
+plot_smooth_pct2
+
+# save the plot as a png file
+png("plot_smooth_pct2.png", width=1024, height=768, res=120)
+plot(plot_smooth_pct2)
+dev.off()
   
 
 ```
