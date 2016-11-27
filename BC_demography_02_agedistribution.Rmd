@@ -181,12 +181,8 @@ plot_agedist_BC_2016
 plot_agedist_BC_2016 <- plot_agedist_BC_2016 +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
-<<<<<<< HEAD
   labs(title = "British Columbia: age distribution (total)",
        subtitle = "2016",
-=======
-  labs(title = "British Columbia, Age distribution, 2016",
->>>>>>> origin/master
        y = "population", x = "age",
        caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
@@ -221,14 +217,9 @@ plot_agedist_BC_2016_pct
 plot_agedist_BC_2016_pct <- plot_agedist_BC_2016_pct +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
-<<<<<<< HEAD
   labs(title = "British Columbia: age distribution (percentage)",
        subtitle = "2016",
        y = "population", x = "age",
-=======
-  labs(title = "British Columbia, Age distribution, 2016",
-       y = "percent of population", x = "age",
->>>>>>> origin/master
        caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
   scale_y_continuous(limits = c(0, 2.25), breaks = seq(0, 2.0, by = 0.5)) 
@@ -545,11 +536,7 @@ plot_smooth_years2 <- plot_smooth_years2 +
   labs(title = "British Columbia: age distribution (total)",
        subtitle = "1971, 2016 & 2041",
        y = "population", x = "age",
-<<<<<<< HEAD
        caption ="Source: Statistics Canada, CANSIM Table 051-0001; BC Stats") +
-=======
-       caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
->>>>>>> origin/master
   scale_x_continuous(breaks = seq(0, 100, 10)) +
   scale_y_continuous(limits = c(0, 90000), breaks = seq(0, 90000, by = 10000),
                      labels = comma)
@@ -581,11 +568,7 @@ plot_smooth_pct2 <- plot_smooth_pct2 +
   labs(title = "British Columbia: age distribution (percent)",
        subtitle = "1971, 2016 & 2041",
        y = "percent of population", x = "age",
-<<<<<<< HEAD
        caption ="Source: Statistics Canada, CANSIM Table 051-0001; BC Stats") +
-=======
-       caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
->>>>>>> origin/master
   scale_x_continuous(breaks = seq(0, 100, 10)) +
   scale_y_continuous(limits = c(0, 2.25), breaks = seq(0, 2.0, by = 0.5)) 
   
