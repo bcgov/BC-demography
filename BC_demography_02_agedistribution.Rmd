@@ -182,7 +182,7 @@ plot_agedist_BC_2016 <- plot_agedist_BC_2016 +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
   labs(title = "British Columbia, Age distribution, 2016",
-       y = "population", x = NULL,
+       y = "population", x = "age",
        caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
 #  scale_x_discrete(breaks = c("10", "20", "30", "40", "50", 
@@ -217,7 +217,7 @@ plot_agedist_BC_2016_pct <- plot_agedist_BC_2016_pct +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
   labs(title = "British Columbia, Age distribution, 2016",
-       y = "percent of population", x = NULL,
+       y = "percent of population", x = "age",
        caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
   scale_y_continuous(limits = c(0, 2.25), breaks = seq(0, 2.0, by = 0.5)) 
@@ -379,15 +379,16 @@ ggplot(data_agedistrib_BC_2016, aes(x=age.num, y=Value)) +
 plot_smooth_years <- ggplot(data_agedistrib_BC_2016, aes(x=age.num, y=Value)) +
   geom_smooth(span = 0.3, se = FALSE, colour = "#234275") +
   geom_smooth(data = data_agedistrib_BC_1971, span = 0.3, se = FALSE, colour = "#E3A82B") +
-  annotate("text", x=55, y=73000, label = "2016", colour =  "#234275", fontface = 2) +
-  annotate("text", x=40, y=24000, label = "1971", colour =  "#234275", fontface = 2)
+  annotate("text", x=19, y=35000, label = "1971", colour =  "#234275", fontface = 2) +
+  annotate("text", x=68, y=35000, label = "2016", colour =  "#234275", fontface = 2)
 
 
 plot_smooth_years <- plot_smooth_years +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
-  labs(title = "British Columbia, Age distribution, 1971 & 2016",
-       y = "population", x = NULL,
+  labs(title = "British Columbia: age distribution (total)",
+       subtitle = "1971 & 2016",
+       y = "population", x = "age",
        caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
   scale_y_continuous(limits = c(0, 90000), breaks = seq(0, 90000, by = 10000),
@@ -411,15 +412,16 @@ dev.off()
 plot_smooth_pct <- ggplot(data_agedistrib_BC_2016, aes(x=age.num, y=year_pct)) +
   geom_smooth(span = 0.3, se = FALSE, colour = "#234275") +
   geom_smooth(data = data_agedistrib_BC_1971, span = 0.3, se = FALSE, colour = "#E3A82B") +
-  annotate("text", x=55, y=1.6, label = "2016", colour =  "#234275", fontface = 2) +
-  annotate("text", x=10, y=2.1, label = "1971", colour =  "#234275", fontface = 2)
+  annotate("text", x=20, y=2.0, label = "1971", colour =  "#234275", fontface = 2) +
+  annotate("text", x=66, y=1.5, label = "2016", colour =  "#234275", fontface = 2)
   
 
 plot_smooth_pct <- plot_smooth_pct +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
-  labs(title = "British Columbia, Age distribution, 1971 & 2016",
-       y = "percent of population", x = NULL,
+  labs(title = "British Columbia: age distribution (percent)",
+       subtitle = "1971 & 2016",
+       y = "percent of population", x = "age",
        caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
   scale_y_continuous(limits = c(0, 2.25), breaks = seq(0, 2.0, by = 0.5)) 
@@ -467,15 +469,13 @@ unique(data_BC_projection$Sex)
 unique(data_BC_projection$Year)
 
 
-# clean up age categories
+# clean up age category labels
 data_BC_projection$age.num <- as.integer(data_BC_projection$Age) 
 data_BC_projection$age.num[data_BC_projection$Age == "100+"] <- 100 
 
 data_BC_projection %>%
   group_by(Sex) %>%
   count()
-
-  
 
 unique(data_BC_projection$age.num)
 
@@ -522,17 +522,18 @@ plot_smooth_years2 <- ggplot(data_agedistrib_BC_2016, aes(x=age.num, y=Value)) +
   geom_smooth(span = 0.25, se = FALSE, colour = "#234275") +
   geom_smooth(data = data_agedistrib_BC_1971, span = 0.25, se = FALSE, colour = "#E3A82B") +
   geom_smooth(data = data_agedistrib_BC_2041, span = 0.25, se = FALSE, colour = "#26BDEF") +
-  annotate("text", x=36, y=82000, label = "2041", colour =  "#234275", fontface = 2) +
-  annotate("text", x=40, y=59000, label = "2016", colour =  "#234275", fontface = 2) +
-  annotate("text", x=40, y=24000, label = "1971", colour =  "#234275", fontface = 2)
+  annotate("text", x=19, y=35000, label = "1971", colour =  "#234275", fontface = 2) +
+  annotate("text", x=68, y=35000, label = "2016", colour =  "#234275", fontface = 2) +
+  annotate("text", x=93, y=35000, label = "2041", colour =  "#234275", fontface = 2)
 
 plot_smooth_years2
 
 plot_smooth_years2 <- plot_smooth_years2 +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
-  labs(title = "British Columbia, Age distribution, 1971 & 2016",
-       y = "population", x = NULL,
+  labs(title = "British Columbia: age distribution (total)",
+       subtitle = "1971, 2016 & 2041",
+       y = "population", x = "age",
        caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
   scale_y_continuous(limits = c(0, 90000), breaks = seq(0, 90000, by = 10000),
@@ -554,16 +555,17 @@ plot_smooth_pct2 <- ggplot(data_agedistrib_BC_2016, aes(x=age.num, y=year_pct)) 
   geom_smooth(span = 0.3, se = FALSE, colour = "#234275") +
   geom_smooth(data = data_agedistrib_BC_1971, span = 0.3, se = FALSE, colour = "#E3A82B") +
   geom_smooth(data = data_agedistrib_BC_2041, span = 0.3, se = FALSE, colour = "#26BDEF") +
-  annotate("text", x=84, y=1.0, label = "2041", colour =  "#234275", fontface = 2) +
-  annotate("text", x=12, y=1.25, label = "2016", colour =  "#234275", fontface = 2) +
-  annotate("text", x=10, y=2.05, label = "1971", colour =  "#234275", fontface = 2)
+  annotate("text", x=20, y=2.0, label = "1971", colour =  "#234275", fontface = 2) +
+  annotate("text", x=68, y=1.5, label = "2016", colour =  "#234275", fontface = 2) +
+  annotate("text", x=85, y=1.0, label = "2041", colour =  "#234275", fontface = 2)
   
 
 plot_smooth_pct2 <- plot_smooth_pct2 +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
-  labs(title = "British Columbia, Age distribution, 1971 & 2016",
-       y = "percent of population", x = NULL,
+  labs(title = "British Columbia: age distribution (percent)",
+       subtitle = "1971, 2016 & 2041",
+       y = "percent of population", x = "age",
        caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
   scale_y_continuous(limits = c(0, 2.25), breaks = seq(0, 2.0, by = 0.5)) 
