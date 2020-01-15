@@ -1,0 +1,210 @@
+---
+title: "BC_demography_03_fertilityrates"
+author: "Martin Monkman"
+date: "February 22, 2016"
+output: html_document
+---
+
+## Fertility rates in British Columbia, 1921-2015
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# THE PRELIMINARIES
+
+# load the necessary packages
+# data manipulation
+library(tidyr)
+library(dplyr)
+# graphics
+library(ggplot2)
+library(scales)
+library(RColorBrewer)
+# tables
+library(xtable)
+
+
+# PLOTTING ESSENTIALS
+
+# create a chart theme & colour palette for use in ggplot2
+# this theme is the basic background for a BC Stats chart
+#
+theme_BCStats <- 
+  theme_bw() +
+  theme(
+    panel.border = element_rect(colour="white"),
+    axis.line = element_line(colour="black"),
+    legend.position=c(1,0), 
+    legend.justification=c(1,0),
+    legend.title = element_text(size=12),
+    legend.text = element_text(size=11),
+    axis.title = element_text(size=12),
+    axis.text = element_text(size=12)
+  )
+#
+
+# colour palette for BC Stats charts (use with scale_colour_manual)
+palette_BCStats <- c("#234275", "#E3A82B", "#26BDEF", "#11CC33", "#D3E2ED", "8A8A8A")
+
+# grayscale for fill (use with scale_fill_manual)
+palette_BCStats_fill <- c("#3F3F3F", "#ABABAB", "#DFDFDF", "#969696", "#838383", "8A8A8A")
+
+
+
+```
+
+
+
+### data
+
+Source file:  (./data_source/20160216_AFSR.back.to.1921.xlsx)
+
+The Excel file was cleaned up to produce a wide table that contained only the year (column 1) and age groups (columns 2-9). This table was saved as `fertilityrate.csv`.
+
+The table is then melted into long format.
+
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# read the data
+#setwd("~/GitHub/BC_demography")
+#
+fertilityrate <- read.csv("./data_source/fertilityrate.csv", header = TRUE)
+
+#colnames(data_agedistrib01) <- c("year", "All.ages", 
+#                                 "00", "01", "02", "03", "04", 
+#                                 "05", "06", "07", "08", "09",
+#                                 seq(10, 89, by = 1), "90+")
+
+# turn the wide version of data_medianage into long format
+#data_agedistrib01_long <- data_agedistrib01 %>%
+#  gather(age, popul, -year) %>%
+#  filter(age != "All.ages")
+
+#head(data_agedistrib01_long)
+
+# turn the wide version of data_medianage into long format, add pctage column
+
+data_fertilityrate_long <- fertilityrate %>%
+  gather(age, fert_rate, -Year)
+
+#head(data_fertilityrate_long)
+#tail(data_fertilityrate_long)
+
+
+```
+
+#### Total fertility rate in B.C., 1921 - 2015
+
+A plot showing the fertility rate in British Columbia, from 1921 through 2015.
+
+The first version of the plot is a basic version of the plot. The second version adds an assortment of formatting:
+
+* axis length and grid specifications
+* axis titles
+* chart title
+
+Note that the X axis scale is such that it follows the five year increments of the Census of Canada.
+
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# filter the data to include just the total
+
+data_fertilityrate_19212015_total <- fertilityrate %>%
+  gather(age, fert_rate, -Year) %>%
+  filter(Year < 2016 & age == "Total")
+
+# --------
+
+# basic
+plot_totalfert <- ggplot(data_fertilityrate_19212015_total, aes(x=Year, y=fert_rate, colour=age)) +
+  #  geom_bar(stat="identity")
+  geom_line(size=1.5)
+
+# basic plot
+#plot_totalfert
+
+# fix the formatting
+
+plot_totalfert +
+  theme_BCStats +
+  scale_colour_manual(values=palette_BCStats) +
+  ggtitle("British Columbia, Total fertility, 1921-2015") +
+  ylab("fertility rate") +
+  scale_x_continuous(breaks = seq(1921, 2016, by = 5)) +
+  scale_y_continuous(limits = c(0, 5000), breaks = seq(0, 5000, by = 1000),
+                     labels = comma) +
+  # remove the legend (not much point when there's only one line!)
+  theme(legend.position="none")
+
+```
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# filter the data to include just the total
+
+data_fertilityrate_19212015_agegrp <- fertilityrate %>%
+  gather(age, fert_rate, -Year) %>%
+  filter(Year < 2016 & age != "Total")
+
+# --------
+
+# basic
+plot_fert_age <- ggplot(data_fertilityrate_19212015_agegrp, aes(x=Year, y=fert_rate, colour=age)) +
+  #  geom_bar(stat="identity")
+  geom_line(size=1.5)
+
+# basic plot
+plot_fert_age
+
+# fix the formatting
+
+plot_fert_age +
+  theme_BCStats +
+  scale_colour_brewer(palette="Greys") +
+  ggtitle("British Columbia, Total fertility, 1921-2015") +
+  ylab("fertility rate") +
+  scale_x_continuous(breaks = seq(1921, 2016, by = 5)) +
+  scale_y_continuous(limits = c(0, 300), breaks = seq(0, 300, by = 50),
+                     labels = comma) +
+  theme(legend.position=c(1,0.5))
+
+```
+
+Too many lines!  Let's try that as a set of facets
+
+
+```{r, echo=FALSE, message=FALSE}
+
+plot_fert_age_facet <- ggplot(data_fertilityrate_19212015_agegrp, aes(x=Year, y=fert_rate)) +
+  #  geom_bar(stat="identity")
+  geom_line(size=1.5) +
+  facet_grid(age ~.)
+
+# basic plot
+plot_fert_age_facet
+
+# fix the formatting
+
+plot_fert_age_facet +
+  theme_BCStats +
+  scale_colour_brewer(palette="Greys") +
+  ggtitle("British Columbia, Total fertility, 1921-2015") +
+  ylab("fertility rate") +
+  scale_x_continuous(breaks = seq(1921, 2016, by = 5)) +
+  scale_y_continuous(limits = c(0, 300), breaks = seq(0, 300, by = 50),
+                     labels = comma) 
+
+```
+
+Well that's not really doing it either.
+
+So perhaps the first version is best, but with either the default garish colours or fewer categories. (After all, there is very low fertility in the 15 - 19 and 45 - 49 categories.)
+
+
+
+-30-

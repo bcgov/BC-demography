@@ -1,0 +1,225 @@
+---
+title: "BC_demography_04_mortality"
+author: "Martin Monkman"
+date: "February 23, 2016"
+output: html_document
+---
+
+## Mortality rates in British Columbia, 1991-2012
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# THE PRELIMINARIES
+
+# load the necessary packages
+# data manipulation
+library(tidyr)
+library(dplyr)
+# graphics
+library(ggplot2)
+library(scales)
+library(RColorBrewer)
+# tables
+library(xtable)
+
+
+# PLOTTING ESSENTIALS
+
+# create a chart theme & colour palette for use in ggplot2
+# this theme is the basic background for a BC Stats chart
+#
+theme_BCStats <- 
+  theme_bw() +
+  theme(
+    panel.border = element_rect(colour="white"),
+    axis.line = element_line(colour="black"),
+    legend.position=c(1,0), 
+    legend.justification=c(1,0),
+    legend.title = element_text(size=12),
+    legend.text = element_text(size=11),
+    axis.title = element_text(size=12),
+    axis.text = element_text(size=12)
+  )
+#
+
+# colour palette for BC Stats charts (use with scale_colour_manual)
+palette_BCStats <- c("#234275", "#E3A82B", "#26BDEF", "#11CC33", "#D3E2ED", "8A8A8A")
+
+# grayscale for fill (use with scale_fill_manual)
+palette_BCStats_fill <- c("#3F3F3F", "#ABABAB", "#DFDFDF", "#969696", "#838383", "8A8A8A")
+
+# NOTE: the RColorBrewer palette "Greys" was used in order to provide more shades
+
+
+```
+
+
+
+### data
+
+Source file:  
+
+CANSIM [Table102-0504, Deaths and mortality rates, by age group and sex, Canada, provinces and territories](http://www5.statcan.gc.ca/cansim/a34?lang=eng&mode=tableSummary&id=1020504&pattern=mortality+rate&stByVal=1&&p1=1&p2=-1)
+
+Saved as (./data_source/cansim-1020504-eng-1447600621526456954.csv)
+
+The downloaded CSV file was cleaned up to produce a wide table that contained only the year (column 1) and age groups (columns 2-9). This table was saved as `mortalityrate.csv`.
+
+The table is then melted into long format.
+
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# read the data
+#setwd("~/GitHub/BC_demography")
+#
+mortalityrate <- read.csv("./data_source/mortalityrate.csv", header = TRUE)
+
+#head(mortalityrate)
+
+# clean up the variable names
+colnames(mortalityrate) <- c("Age", "Sex", seq(1991, 2012, by = 1))
+#head(mortalityrate)
+
+mortalityrate$Age1[mortalityrate$Age == "all ages"] <- "all ages"
+mortalityrate$Age1[mortalityrate$Age == "under 1 year"] <- "00"
+mortalityrate$Age1[mortalityrate$Age == "1 to 4 years"] <- "01-04"
+mortalityrate$Age1[mortalityrate$Age == "5 to 9 years"] <- "05-09"
+mortalityrate$Age1[mortalityrate$Age == "10 to 14 years"] <- "10-14"
+mortalityrate$Age1[mortalityrate$Age == "15 to 19 years"] <- "15-19"
+mortalityrate$Age1[mortalityrate$Age == "20 to 24 years"] <- "20-24"
+mortalityrate$Age1[mortalityrate$Age == "25 to 29 years"] <- "25-29"
+mortalityrate$Age1[mortalityrate$Age == "30 to 34 years"] <- "30-34"
+mortalityrate$Age1[mortalityrate$Age == "35 to 39 years"] <- "35-39"
+mortalityrate$Age1[mortalityrate$Age == "40 to 44 years"] <- "40-44"
+mortalityrate$Age1[mortalityrate$Age == "45 to 49 years"] <- "45-49"
+mortalityrate$Age1[mortalityrate$Age == "50 to 54 years"] <- "50-54"
+mortalityrate$Age1[mortalityrate$Age == "55 to 59 years"] <- "55-59"
+mortalityrate$Age1[mortalityrate$Age == "60 to 64 years"] <- "60-64"
+mortalityrate$Age1[mortalityrate$Age == "65 to 69 years"] <- "65-69"
+mortalityrate$Age1[mortalityrate$Age == "70 to 74 years"] <- "70-74"
+mortalityrate$Age1[mortalityrate$Age == "75 to 79 years"] <- "75-79"
+mortalityrate$Age1[mortalityrate$Age == "80 to 84 years"] <- "80-84"
+mortalityrate$Age1[mortalityrate$Age == "85 to 89 years"] <- "85-89"
+mortalityrate$Age1[mortalityrate$Age == "90 years and over"] <- "90+"
+
+#head(mortalityrate)
+#tail(mortalityrate)
+
+
+# turn the wide version of data_medianage into long format
+
+data_mortalityrate_long <- mortalityrate %>%
+  select(-Age) %>%
+  gather(year, mort_rate, -Age1, -Sex)
+
+#head(data_mortalityrate_long)
+#tail(data_mortalityrate_long)
+
+```
+
+#### Total mortality rate in B.C., 1991 - 2012
+
+A plot showing the mortality rate in British Columbia, from 1991 through 2012.
+
+The first plot shows the total mortality rate, which is little changed over the period.
+
+Note that the X axis scale is such that it follows the five year increments of the Census of Canada.
+
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# filter the data to include just the total
+
+data_mortalityrate_total <- mortalityrate %>%
+  select(-Age) %>%
+  gather(year, mort_rate, -Age1, -Sex) %>%
+  filter(Sex == "Both sexes", Age1 == "all ages")
+
+#head(data_mortalityrate_total)
+#ls.str(data_mortalityrate_total)
+
+# ------
+
+# basic
+plot_totalmort <- ggplot(data_mortalityrate_total, aes(x=year, y=mort_rate, group=Age1)) +
+  #  geom_bar(stat="identity")
+  geom_line(size=1.5)
+
+# basic plot
+#plot_totalmort
+
+# fix the formatting
+
+plot_totalmort +
+  theme_BCStats +
+  scale_colour_manual(values=palette_BCStats) +
+  ggtitle("British Columbia, Total mortality, 1991-2012") +
+  ylab("mortality rate") +
+  scale_x_discrete(breaks = seq(1991, 2012, by = 5)) +
+  scale_y_continuous(limits = c(6, 8), breaks = seq(6, 8, by = 0.5)) +
+  # remove the legend (not much point when there's only one line!)
+  theme(legend.position="none")
+
+```
+
+
+We begin to see the improvements in mortality if we look across the age ranges (along the bottom axis). Even at this scale it is possible to see that fewer infants are dying before their first birthday. And the gap begins to widen starting at the 60-64 age group.
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# filter to include the age categories
+
+
+data_mortalityrate_annual <- mortalityrate %>%
+  select(-Age) %>%
+  gather(year, mort_rate, -Age1, -Sex) %>%
+  filter(Sex == "Both sexes", Age1 != "all ages")
+
+#head(data_mortalityrate_annual)
+#ls.str(data_mortalityrate_annual)
+
+
+year_list <- c(1991, 2012)
+
+data_mortalityrate_91_12 <- data_mortalityrate_annual %>%
+  filter(year %in% year_list) 
+
+#head(data_mortalityrate_91_12)
+#tail(data_mortalityrate_91_12)
+
+
+# --------
+
+
+# basic
+plot_mort_91_12 <- 
+  ggplot(data_mortalityrate_91_12, aes(x=Age1, y=mort_rate, group=year, colour=year)) +
+  geom_line(size=1.5)
+
+# basic plot
+#plot_mort_91_12
+
+# fix the formatting
+
+plot_mort_91_12 +
+  theme_BCStats +
+  scale_colour_manual(values=palette_BCStats) +
+  ggtitle("British Columbia, Total mortality, 1991-2012") +
+  ylab("mortality rate") +
+#  scale_x_discrete(breaks = seq(1991, 2012, by = 5)) +
+  scale_y_continuous(limits = c(0, 225), breaks = seq(0, 200, by = 50)) +
+  # put the legend in the top left corner
+  theme(legend.position = c(0.15, 0.75))
+
+
+```
+
+**Note**: running into William Playfair's balance of trade visualization problem here. Would be better to show the improvement.
+
+
+-30-

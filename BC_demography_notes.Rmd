@@ -1,0 +1,62 @@
+---
+title: "BC_demography_notes"
+author: "Martin Monkman"
+date: "February 8, 2016"
+output: html_document
+---
+
+## The Components of Population Change
+
+#### Births
+
+* declining fertility rates has meant fewer babies
+
+#### Deaths
+
+* we're living longer ... the mortality rate has fallen at all ages
+
+#### Migration
+
+* any pithy point here?
+ 
+---
+
+## Some notes
+
+### Baby Boom
+
+Baby boom cohort: born between 1946 and 1965
+
+Currently age 50 to 70
+
+"The pace of population aging will remain rapid until 2031, when the last baby boomers turn 65"
+[Statistics Canada, _Annual Demographic Estimates: Canada, Provinces and Territories_, 2014; Section 2: Population by age and sex](http://www.statcan.gc.ca/pub/91-215-x/2014000/part-partie2-eng.htm)
+
+Population aging "is the result of baby boomers (born between 1946 and 1965) reaching more advanced ages, combined with a fertility rate below the replacement level and an increase in life expectancy."
+[Statistics Canada, _Annual Demographic Estimates: Canada, Provinces and Territories_, 2015 Section 2: Population by age and sex](http://www.statcan.gc.ca/pub/91-215-x/2015000/part-partie2-eng.htm)
+
+
+### British Columbia was once the oldest province, but no more
+
+[Median age, 1975 to 2015, Canada, provinces with lowest and highest median age](http://www.statcan.gc.ca/pub/91-215-x/2015000/ct003-eng.htm)
+
+* [Data source: 051-0001](http://www5.statcan.gc.ca/cansim/a26?lang=eng&retrLang=eng&id=0510001&&pattern=&stByVal=1&p1=1&p2=38&tabMode=dataTable&csid=)
+
+
+
+### Around the World
+
+["By 2060, U.S. will  have almost as many Americans over age 85 as under age 5" (Pew Research, _The Next America_, 2014-04-10) ](http://www.pewresearch.org/next-america/)
+
+
+### Inter-provincial migration
+
+From the high tech indicators report:
+
+6.2.  Inter-provincial Migration
+Canadian workers are much freer to move within the borders of the country than they are internationally. In aggregate, population movement between provinces is a general indicator of perceived economic opportunity and general attractiveness. Individuals and families often relocate for economic reasons. In this way, this indicator points to the overall perception of the strength of provincial economies and the labour pool from which employers can draw.
+The pattern of inter-provincial migration in Canada is substantially dictated by people seeking better economic opportunities. With the exception of 2011 and 2012, B.C. has seen a steady in-migration from other provinces. In 2014, the province experienced a net inflow of over 12,400 migrants, marking the second consecutive year of net inter-provincial gains.
+Over the last decade, B.C. and Alberta were the only provinces to experience an annual net in-migration. Alberta gained an average of nearly 25,300 between 2004 and 2014, while over the same period, B.C. welcomed an average of over 7,800 residents from other provinces per year. 
+
+
+

@@ -1,0 +1,183 @@
+---
+title: "BC_demography_01_medianage"
+author: "Martin Monkman"
+date: "February 8, 2016"
+output: html_document
+---
+
+## Plot of the change in median age in British Columbia, 1971-2015
+
+### data
+
+Source file:  (data_source/cansim-0510001-eng-7291498208024636066.csv)
+
+The CANSIM extract was cleaned up to produce a wide table that contained only the year (as the first variable) and the name of the region (Canada, province, or territory). 
+
+Note that the Northwest Territories splits in 1991, into Northwest Territories and Nunavut.
+
+The table is then melted into long format.
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# load the necessary packages
+library(tidyr)
+library(dplyr)
+
+# read the data
+#setwd("~/GitHub/BC_demography")
+data_medianage <- read.csv("./data_source/data_medianage.csv", header = TRUE)
+#data_medianage <- read.csv("data_medianage.csv", header = TRUE)
+
+# turn the wide version of data_medianage into long format
+data_medianage_long <- data_medianage %>%
+  gather(region, median_age, -year)
+
+# filter the long frame to include only B.C. 
+data_median_age_BC <- filter(data_medianage_long, region == "British.Columbia")
+
+```
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# PLOTTING ESSENTIALS
+
+#load the necessary packages for plotting
+library(ggplot2)
+
+# -----
+
+# create a chart theme & colour palette for use in ggplot2
+# this theme is the basic background for a BC Stats chart
+#
+theme_BCStats <- 
+  theme_bw() +
+  theme(
+    panel.border = element_rect(colour="white"),
+    axis.line = element_line(colour="black"),
+    legend.position=c(1,0), 
+    legend.justification=c(1,0),
+    legend.title = element_text(size=12),
+    legend.text = element_text(size=11),
+    axis.title = element_text(size=12),
+    axis.text = element_text(size=12)
+  )
+#
+
+# colour palette for BC Stats charts
+
+palette_BCStats <- c("#234275", "#E3A82B", "#26BDEF", "#11CC33", "#D3E2ED", "8A8A8A")
+
+
+```
+
+
+### B.C. median age plot
+
+The first version of the plot is a basic version of the plot, with only the line weight and colour specified.
+
+The second version adds an assortment of formatting:
+
+* axis length and grid specifications
+* axis titles
+* chart title
+
+Note that the X axis scale is such that it follows the five year increments of the Census of Canada.
+
+
+
+
+
+```{r, echo=FALSE, message=FALSE}
+
+
+# basic
+plot_median_age_BC <- 
+  ggplot(data_median_age_BC, aes(x=year, y=median_age, colour=region)) +
+  geom_line(size = 1.5)
+
+plot_median_age_BC
+
+# fix the formatting
+
+plot_median_age_BC +
+  theme_BCStats +
+  scale_colour_manual(values=palette_BCStats) +
+  ggtitle("Median age, British Columbia, 1971-2015") +
+  ylab("median age") +
+  scale_x_continuous(breaks = seq(1971, 2016, by = 5)) +
+  scale_y_continuous(limits = c(20, 45), breaks = seq(20, 45, by = 5))
+
+
+```
+
+### B.C. and Canada median age plot
+
+This version adds a second line to allow for the comparison of the change in the median age of British Columbians to that of Canadians overall.
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# filter the long frame to include only B.C. and Canada
+regions <- c("British.Columbia", "Canada")
+data_median_age_BC_Can <- 
+  filter(data_medianage_long, region %in% regions)
+
+# basic
+plot_median_age_BC_Can <- 
+  ggplot(data_median_age_BC_Can, aes(x=year, y=median_age, colour = region)) +
+  geom_line(size = 1.5)
+
+# fix the formatting
+plot_median_age_BC_Can +
+  theme_BCStats +
+  scale_colour_manual(values=palette_BCStats) +
+  ggtitle("Median age, British Columbia and Canada, 1971-2015") +
+  ylab("median age") +
+  scale_x_continuous(breaks = seq(1971, 2016, by = 5)) +
+  scale_y_continuous(limits = c(20, 45), breaks = seq(20, 45, by = 5))
+
+
+```
+
+### Conventional wisdom: B.C. is an old province
+
+The above chart makes it plain that British Columbians are indeed older than Canadians as a whole. 
+
+But what may not be known is that British Columbia, while once the oldest province, no longer has that distinction. 
+
+Between 1994 and 2001, Quebec had the highest median age. From 2002 through 2004, Nova Scotians had the highest median age. And since then, Newfoundland & Labrador has had the highest median age of any Canadian province or territory.  
+
+The chart below compares the median age in British Columbia in the years 1971 through 2015 to Newfoundland & Labrador. It has been a remarkable change there. For the years 1971 through 1993, it was the youngest province. Over the span of a dozen years, it went from the youngest to the oldest. And in 2015 the median age in Newfoundland & Labrador was 45--a full 4.5 years higher than the median age across Canada.
+
+This dramatic shift in the age profile in Newfoundland & Labrador was a consequence of the collapse of the North Atlantic cod fishery; the moratorium instantly put 30,000 people out of work, and the population of the province fell by 10% between 1991 and 2001. [Source: Heritage Newfoundland & Labrador, "Rural Depopulation"](http://www.heritage.nf.ca/articles/society/depopulation.php)
+
+```{r, echo=FALSE, message=FALSE}
+
+# filter the long frame to include B.C. and Newfoundland and Labrador
+regions <- c("British.Columbia", "Newfoundland.and.Labrador")
+data_median_age_BC_prov <- 
+  filter(data_medianage_long, region %in% regions)
+
+# basic
+plot_median_age_BC_prov <- 
+  ggplot(data_median_age_BC_prov, aes(x=year, y=median_age, colour = region)) +
+  geom_line(size = 1.5)
+
+# fix the formatting
+plot_median_age_BC_prov +
+  theme_BCStats +
+  scale_colour_manual(values=palette_BCStats) +
+  ggtitle("Median age, British Columbia & Newfoundland & Labrador, 1971-2015") +
+  ylab("median age") +
+  scale_x_continuous(breaks = seq(1971, 2016, by = 5)) +
+  scale_y_continuous(limits = c(20, 45), breaks = seq(20, 45, by = 5)) +
+  theme(panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank())
+
+
+```
+
+
+-30-

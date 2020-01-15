@@ -1,0 +1,116 @@
+---
+title: 'B.C. Demography: References'
+author: "Martin Monkman"
+date: "February 7, 2016"
+output: html_document
+---
+
+## BC Stats
+
+### Reports
+
+* BC Stats, [1971-2014 Estimates / 2015-2041 Projections ](http://www.bcstats.gov.bc.ca/Files/1129fe33-668a-4bab-a8ef-32562eef7e79/BritishColumbiaPopulationProjections2015-2041.pdf), May 2015.
+
+* Sonya Tomin, [BC Level Population Projection Technical Assumptions](http://www.bcstats.gov.bc.ca/Files/cc653950-6e2c-426d-884e-fad0d6d34fab/BCLevelPopulationProjectionTechnicalAssumptions.pdf), May 2014.
+
+* Jackie Storen, ["British Columbia in 2036"](http://www.bcstats.gov.bc.ca/Files/48b3eee9-248f-49c2-94a5-3b9422efb6e8/BritishColumbiain2036PEOPLE36.pdf), BC Stats, September 2009.
+
+* Jennifer Hansen, ["The Dynamics of Population Ageing in B.C.--A Pig in a Python?"](http://www.bcstats.gov.bc.ca/Files/da1c6f74-20c5-43bd-b081-f120276bb4fa/TheDynamicsofPopulationAgeinginBC-APiginaPython.pdf), _Business Indicators_, BC Stats, 2007-02-01
+
+
+
+### Other BC Stats data and resources
+
+* [BC Stats: demography](http://www.bcstats.gov.bc.ca/StatisticsBySubject/Demography.aspx)
+
+  + This is the main page for demographic statistics at BC Stats, from which the following can be accessed:
+
+* [BC Stats: population estimates](http://www.bcstats.gov.bc.ca/StatisticsBySubject/Demography/PopulationEstimates.aspx)
+
+  + Currrently 1971 - 2015 
+
+* [BC Stats: population projections](http://www.bcstats.gov.bc.ca/StatisticsBySubject/Demography/PopulationProjections.aspx)
+
+  + Currently 2015 - 2041
+
+
+## Statistics Canada
+
+### Population estimates
+
+* [Annual Demographic Estimates: Canada, Provinces and Territories (91-215-X)](http://www5.statcan.gc.ca/olc-cel/olc.action?ObjId=91-215-X&ObjType=2&lang=en&limit=0)
+
++ Annual estimates of total population for Canada, the provinces, and the territories. The report also has estimates of the components of change, including births, deaths, and different forms of migration.
+
+ + The ["Related Products"](http://www.statcan.gc.ca/pub/91-215-x/2015000/related-connexes-eng.htm) page has a lengthy list of additional publications and CANSIM tables relevant to the topic.
+
+* [Estimates of population, by age group and sex for July 1, Canada, provinces and territories (annual): CANSIM table 051-0001](http://www5.statcan.gc.ca/cansim/a26?lang=eng&retrLang=eng&id=0510001&&pattern=&stByVal=1&p1=1&p2=37&tabMode=dataTable&csid=)
+
+ + The mother lode. The most granular detail available (single year age, by sex, for all 13 provinces and territories, for each of the year 1971 - 2015).
+
+ + Data source for following tables and charts: median age by province, age distribution (1971-2015).
+
+
+* [Population by sex and age group](http://www.statcan.gc.ca/tables-tableaux/sum-som/l01/cst01/demo10a-eng.htm)
+
+ + A summary table of Canadian population
+ 
+ 
+
+### Population projections
+
+* [Statistics Canada: Population projections: Canada, the provinces and territories, 2013 to 2063](http://www.statcan.gc.ca/daily-quotidien/140917/dq140917a-eng.htm)
+
+  + data tables for above projections: [Population projections: Canada, the provinces and territories, 2013 to 2063](http://www.statcan.gc.ca/daily-quotidien/140917/dq140917a-cansim-eng.htm)
+
+
+### Fertility rates & Births
+
+* [Fertility rates: Crude birth rate, age-specific and total fertility rates (live births), Canada, provinces and territories: CANSIM table 102-4505 ](http://www5.statcan.gc.ca/cansim/pick-choisir?lang=eng&p2=33&id=1024505)
+
+* [Trends in Canadian births, 1992 to 2012](http://www.statcan.gc.ca/pub/82-625-x/2016001/article/14314-eng.htm)
+
+  + One of the [Health Fact Sheets](http://www5.statcan.gc.ca/olc-cel/olc.action?objId=82-625-X&objType=2&lang=en&limit=0)
+
+
+### Mortality rates
+
+* [Trends in mortality rates, 2000 to 2012](http://www.statcan.gc.ca/pub/82-625-x/2015001/article/14297-eng.htm)
+
++ Earlier edition: [Trends in mortality rates, 2000 to 2011](http://www.statcan.gc.ca/pub/82-625-x/2014001/article/11897-eng.htm)
+
++ One of the [Health Fact Sheets](http://www5.statcan.gc.ca/olc-cel/olc.action?objId=82-625-X&objType=2&lang=en&limit=0)
+
+* [Deaths and mortality rates, by age group and sex, Canada, provinces and territories; CANSIM table 102-0504](hhttp://www5.statcan.gc.ca/cansim/a26?lang=eng&id=1020504)
+
+* [Deaths and age-standardized mortality rate, by province and territory](http://www.statcan.gc.ca/tables-tableaux/sum-som/l01/cst01/hlth86b-eng.htm)
+
+* [Historical Statistics of Canada, Section B: Vital Statistics and Health](http://www.statcan.gc.ca/pub/11-516-x/sectionb/4147437-eng.htm)
+
+
+### Migration
+
+#### Interprovincial & International
+
+Add some details
+
+### Other Statistics Canada resources
+
+* [Focus on Geography, Census 2011](http://www12.statcan.gc.ca/census-recensement/2011/as-sa/fogs-spg/Facts-pr-eng.cfm?Lang=Eng&GC=59)
+
+* [Figure 26 Age pyramid of the mid-size urban centres population of Parksville (B.C.) and Thompson (Man.) in 2006](http://www12.statcan.ca/census-recensement/2006/as-sa/97-551/figures/c26-eng.cfm)
+
+* [Labour force survey estimates (LFS), retirement age by class of worker and sex](http://www5.statcan.gc.ca/cansim/pick-choisir?lang=eng&p2=33&id=2820051)
+
+
+
+## Other Sources
+
+* John Douglas Belshaw (2009) _Becoming British Columbia: A Population History_. UBC Press.
+  + [UBC Press book page](http://www.ubcpress.com/search/title_book.asp?BookID=299172433)   
+  + [review by Forrest Pass, _BC Studies_ no. 164 Winter 2009/2010](http://bcstudies.com/?q=book-reviews/becoming-british-columbia-population-history)
+
+
+* [Wikipedia entry, "Demographics of Canada"](https://en.wikipedia.org/wiki/Demographics_of_Canada)
+
+-30-

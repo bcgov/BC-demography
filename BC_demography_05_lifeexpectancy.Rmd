@@ -1,0 +1,171 @@
+---
+title: "BC_demography_05_lifeexpectancy"
+author: "Martin Monkman"
+date: "February 26, 2016"
+output: html_document
+---
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# THE PRELIMINARIES
+
+# load the necessary packages
+# data manipulation
+library(tidyr)
+library(dplyr)
+# graphics
+library(ggplot2)
+library(scales)
+library(RColorBrewer)
+# tables
+library(xtable)
+
+
+# PLOTTING ESSENTIALS
+
+# create a chart theme & colour palette for use in ggplot2
+# this theme is the basic background for a BC Stats chart
+#
+theme_BCStats <- 
+  theme_bw() +
+  theme(
+    panel.border = element_rect(colour="white"),
+    axis.line = element_line(colour="black"),
+    legend.position=c(1,0), 
+    legend.justification=c(1,0),
+    legend.title = element_text(size=12),
+    legend.text = element_text(size=11),
+    axis.title = element_text(size=12),
+    axis.text = element_text(size=12)
+  )
+#
+
+# colour palette for BC Stats charts (use with scale_colour_manual)
+palette_BCStats <- c("#234275", "#E3A82B", "#26BDEF", "#11CC33", "#D3E2ED", "8A8A8A")
+
+# grayscale for fill (use with scale_fill_manual)
+palette_BCStats_fill <- c("#3F3F3F", "#ABABAB", "#DFDFDF", "#969696", "#838383", "8A8A8A")
+
+# NOTE: the RColorBrewer palette "Greys" can be used in order to provide more shades
+
+```
+
+
+
+## Plot of the change in life expectancy in British Columbia, 1971-2015
+
+### data
+
+Summary table: [Life expectancy at birth, by sex, by province](http://www.statcan.gc.ca/tables-tableaux/sum-som/l01/cst01/health26-eng.htm)
+
+Life tables: [Life Tables, Canada, Provinces and Territories (84-537-X)](http://www5.statcan.gc.ca/olc-cel/olc.action?objId=84-537-X&objType=2&lang=en&limit=0)
+
+Data source: [Life expectancy, at birth and at age 65, by sex, Canada, provinces and territories; CANSIM Table 102-0512](http://www5.statcan.gc.ca/cansim/a26?lang=eng&retrLang=eng&id=1020512&&pattern=&stByVal=1&p1=1&p2=37&tabMode=dataTable&csid=)
+
+
+The CANSIM Table 102-0512 was used to download the file:  (data_source/cansim-1020512-eng-5562131734164497858.csv)
+
+
+The CANSIM extract was cleaned up to produce a wide table that contained only the Geography (as the first variable), Sex, and Life Expectancy category (At birth & At age 65). 
+
+A CSV of this sheet was saved as BC_lifeexpectancy.csv, which is read into the R workspace.
+
+The resulting table is then melted into long format.
+
+#### Defining "life expectancy"
+
+From [footnote 3 in the CANSIM table 102-0512](http://www5.statcan.gc.ca/cansim/a26?lang=eng&retrLang=eng&id=1020512&&pattern=&stByVal=1&p1=1&p2=37&tabMode=dataTable&csid=):
+
+> Life expectancy is the number of years a person would be expected to live, 
+> starting at birth (for life expectancy at birth) or at age 65 (for life expectancy at age 65) 
+> if the age- and sex-specific mortality rates for a given observation period 
+> (such as a calendar year) were held constant over his/her life span.
+
+
+```{r, echo=FALSE, message=FALSE}
+
+
+
+# read the data
+setwd("C:/@data/GitHub/BC_demography")
+BC_lifeexpectancy <- read.csv("./data_source/BC_lifeexpectancy.csv", header = TRUE)
+#data_medianage <- read.csv("data_medianage.csv", header = TRUE)
+
+# turn the wide version of data_medianage into long format
+BC_lifeexpectancy_long <- BC_lifeexpectancy %>%
+  gather(Year, Life_expectancy, -Sex, -Geography, -Life.expectancy)
+
+head(BC_lifeexpectancy_long)
+
+# filter the long frame to include only B.C. 
+#data_median_age_BC <- filter(data_medianage_long, region == "British.Columbia")
+
+```
+
+Note to self: the source data could/should just be the entire national field, and then filtered to include only the B.C. series.
+
+
+
+### B.C. life expectancy plot -- from At birth
+
+The first version plots the change in life expectancy at birth.
+
+
+
+
+
+
+```{r, echo=FALSE, message=FALSE}
+
+
+#Note that the X axis scale is such that it follows the five year increments of the Census of Canada.
+#OK maybe in this case it doesn't
+
+# filter to include just "At birth" and "Both sexes"
+
+BC_lifeexpectancy_Atbirth <- BC_lifeexpectancy_long %>%
+  filter(Life.expectancy == "At birth", Sex == "Both sexes")
+
+head(BC_lifeexpectancy_Atbirth)
+
+# basic
+plot_lifeexpectancy_BC <- 
+  ggplot(BC_lifeexpectancy_Atbirth, aes(x=Year, y=Life_expectancy, group=Geography)) +
+  geom_line(size = 1.5)
+
+plot_lifeexpectancy_BC
+
+
+# fix the formatting
+
+
+plot_lifeexpectancy_BC +
+  theme_BCStats +
+  scale_colour_manual(values=palette_BCStats) +
+  ggtitle("British Columbia, Life expectancy at birth, 1992-2009") +
+  ylab("life expectancy") +
+  #scale_x_discrete(breaks = seq(1991, 2012, by = 5)) +
+  scale_y_continuous(limits = c(75, 85), breaks = seq(75, 85, by = 1)) +
+  # remove the legend (not much point when there's only one line!)
+  theme(legend.position="none")
+
+
+
+
+```
+
+
+Fix the X axis values
+
+
+
+Add the following:
+
+* Life expectancy at age 65
+
+* compare men and women (closing the gap)
+
+Is there data going further back?
+
+-30-

@@ -1,0 +1,338 @@
+---
+title: "BC_demography_04b_mortality"
+author: "Martin Monkman"
+date: "February 23, 2016"
+output: html_document
+---
+
+## Mortality rates in British Columbia, 1991-2012
+
+
+**Note:** this version calculates the mortality rates from scratch, allowing the period to extend back to 1971 and forward to 2015 (compared to the published Statisics Canada table, which only covers 1991-2012).
+
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# THE PRELIMINARIES
+
+# load the necessary packages
+# data manipulation
+library(tidyr)
+library(dplyr)
+# graphics
+library(ggplot2)
+library(scales)
+library(RColorBrewer)
+# tables
+library(xtable)
+
+
+# PLOTTING ESSENTIALS
+
+# create a chart theme & colour palette for use in ggplot2
+# this theme is the basic background for a BC Stats chart
+#
+theme_BCStats <- 
+  theme_bw() +
+  theme(
+    panel.border = element_rect(colour="white"),
+    axis.line = element_line(colour="black"),
+    legend.position=c(1,0), 
+    legend.justification=c(1,0),
+    legend.title = element_text(size=12),
+    legend.text = element_text(size=11),
+    axis.title = element_text(size=12),
+    axis.text = element_text(size=12)
+  )
+#
+
+# colour palette for BC Stats charts (use with scale_colour_manual)
+palette_BCStats <- c("#234275", "#E3A82B", "#26BDEF", "#11CC33", "#D3E2ED", "8A8A8A")
+
+# grayscale for fill (use with scale_fill_manual)
+palette_BCStats_fill <- c("#3F3F3F", "#ABABAB", "#DFDFDF", "#969696", "#838383", "8A8A8A")
+
+# NOTE: the RColorBrewer palette "Greys" was used in order to provide more shades
+
+
+```
+
+
+The calculation of mortality rates is in two stages:
+
+1. Ages 1 to 90+
+
+*  group into five year age groups (starting with 1-4 [not 5 years I know!], then 5-9, 10-14, etc.)
+*  sum the deaths and the population in those groups
+*  (numerator) deaths in age category divided by (denominator) total population, multiplied by 1,000
+
+2. Under age 1 (infant mortality)
+
+
+### data
+
+
+#### population
+
+Source file:  `AS_1971_2015_v1.xlsx`
+
+* the population sheet was saved as a separate XLSX file, transformed, and a ReadMe sheet spelling out the details of the transformation.
+
+* The transformed table was saved as `BC_DEATHS_1971-2015.csv`.
+
+The table is read into the workspace, then melted into long format.
+
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# read the data
+#setwd("~/GitHub/BC_demography")
+#
+
+BC_population <- read.csv("./data_source/BC_Population_1971-2015.csv", header = TRUE)
+
+# SAVE FOR LATER!
+#BC_deaths <- read.csv("./data_source/BC_DEATHS_1971-2015.csv", header = TRUE)
+
+#head(mortalityrate)
+
+# clean up the variable names
+colnames(BC_population) <- c("SGC", "Area.Name", "Year", "Level", "Sex",
+                             "Total", "under1", "00", "01", "02", "03", "04", 
+                             "05", "06", "07", "08", "09", 
+                             seq(10, 89, by = 1), "90+")
+
+head(BC_population)
+
+
+# convert to long format
+
+BC_population_long <- BC_population %>%
+  select(-(SGC:Area.Name), -Level) %>%
+  gather(Age, Popul, -c(Sex, Year))
+
+head(BC_population_long)
+
+
+# define the five year groups
+
+Infant <- c("under1", "00")
+age01_04 <- c("01", "02", "03", "04")
+age05_09 <- c("05", "06", "07", "08", "09")
+age10_14 <- c(seq(10, 14, by = 1))
+age15_19 <- c(seq(15, 19, by = 1))
+age20_24 <- c(seq(20, 24, by = 1))
+age25_29 <- c(seq(25, 29, by = 1))
+age30_34 <- c(seq(30, 34, by = 1))
+age35_39 <- c(seq(35, 39, by = 1))
+age40_44 <- c(seq(40, 44, by = 1))
+age45_49 <- c(seq(45, 49, by = 1))
+age50_54 <- c(seq(50, 54, by = 1))
+age55_59 <- c(seq(55, 59, by = 1))
+age60_64 <- c(seq(60, 64, by = 1))
+age65_69 <- c(seq(65, 69, by = 1))
+age70_74 <- c(seq(70, 74, by = 1))
+age75_79 <- c(seq(75, 79, by = 1))
+age80_84 <- c(seq(80, 84, by = 1))
+age85_89 <- c(seq(85, 89, by = 1))
+age90plus <- c("90+")
+
+
+BC_population_long$AgeGrp[BC_population_long$Age == "Total"] <- "Total"
+BC_population_long$AgeGrp[BC_population_long$Age %in% Infant] <- "Infant"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age01_04] <- "01_04"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age05_09] <- "05_09"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age10_14] <- "10_14"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age15_19] <- "15_19"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age20_24] <- "20_24"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age25_29] <- "25_29"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age30_34] <- "30_34"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age35_39] <- "35_39"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age40_44] <- "40_44"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age45_49] <- "45_49"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age50_54] <- "50_54"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age55_59] <- "55_59"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age60_64] <- "60_64"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age65_69] <- "65_69"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age70_74] <- "70_74"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age75_79] <- "75_79"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age80_84] <- "80_84"
+BC_population_long$AgeGrp[BC_population_long$Age %in% age85_89] <- "85_89"
+BC_population_long$AgeGrp[BC_population_long$Age == "90+"] <- "90+"
+
+
+
+
+
+head(BC_population_long)
+
+
+# ------------ START HERE -------------------
+
+# sum the five-year groups
+
+BC_population_grps <- BC_population_long %>%
+  # filter in the Sex == 3 (Both), filter out the under 1 and 0 ages
+  filter(Sex == "3", !(Age %in% c("Total", "under1", "00"))) %>%
+  # summarize into the age categories
+
+
+head(BC_population_grps)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+mortalityrate$Age1[mortalityrate$Age == "all ages"] <- "all ages"
+mortalityrate$Age1[mortalityrate$Age == "under 1 year"] <- "00"
+mortalityrate$Age1[mortalityrate$Age == "1 to 4 years"] <- "01-04"
+mortalityrate$Age1[mortalityrate$Age == "5 to 9 years"] <- "05-09"
+mortalityrate$Age1[mortalityrate$Age == "10 to 14 years"] <- "10-14"
+mortalityrate$Age1[mortalityrate$Age == "15 to 19 years"] <- "15-19"
+mortalityrate$Age1[mortalityrate$Age == "20 to 24 years"] <- "20-24"
+mortalityrate$Age1[mortalityrate$Age == "25 to 29 years"] <- "25-29"
+mortalityrate$Age1[mortalityrate$Age == "30 to 34 years"] <- "30-34"
+mortalityrate$Age1[mortalityrate$Age == "35 to 39 years"] <- "35-39"
+mortalityrate$Age1[mortalityrate$Age == "40 to 44 years"] <- "40-44"
+mortalityrate$Age1[mortalityrate$Age == "45 to 49 years"] <- "45-49"
+mortalityrate$Age1[mortalityrate$Age == "50 to 54 years"] <- "50-54"
+mortalityrate$Age1[mortalityrate$Age == "55 to 59 years"] <- "55-59"
+mortalityrate$Age1[mortalityrate$Age == "60 to 64 years"] <- "60-64"
+mortalityrate$Age1[mortalityrate$Age == "65 to 69 years"] <- "65-69"
+mortalityrate$Age1[mortalityrate$Age == "70 to 74 years"] <- "70-74"
+mortalityrate$Age1[mortalityrate$Age == "75 to 79 years"] <- "75-79"
+mortalityrate$Age1[mortalityrate$Age == "80 to 84 years"] <- "80-84"
+mortalityrate$Age1[mortalityrate$Age == "85 to 89 years"] <- "85-89"
+mortalityrate$Age1[mortalityrate$Age == "90 years and over"] <- "90+"
+
+#head(mortalityrate)
+#tail(mortalityrate)
+
+
+# turn the wide version of data_medianage into long format
+
+data_mortalityrate_long <- mortalityrate %>%
+  select(-Age) %>%
+  gather(year, mort_rate, -Age1, -Sex)
+
+#head(data_mortalityrate_long)
+#tail(data_mortalityrate_long)
+
+```
+
+#### Total mortality rate in B.C., 1991 - 2012
+
+A plot showing the mortality rate in British Columbia, from 1991 through 2012.
+
+The first plot shows the total mortality rate, which is little changed over the period.
+
+Note that the X axis scale is such that it follows the five year increments of the Census of Canada.
+
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# filter the data to include just the total
+
+data_mortalityrate_total <- mortalityrate %>%
+  select(-Age) %>%
+  gather(year, mort_rate, -Age1, -Sex) %>%
+  filter(Sex == "Both sexes", Age1 == "all ages")
+
+#head(data_mortalityrate_total)
+#ls.str(data_mortalityrate_total)
+
+# ------
+
+# basic
+plot_totalmort <- ggplot(data_mortalityrate_total, aes(x=year, y=mort_rate, group=Age1)) +
+  #  geom_bar(stat="identity")
+  geom_line(size=1.5)
+
+# basic plot
+#plot_totalmort
+
+# fix the formatting
+
+plot_totalmort +
+  theme_BCStats +
+  scale_colour_manual(values=palette_BCStats) +
+  ggtitle("British Columbia, Total mortality, 1991-2012") +
+  ylab("mortality rate") +
+  scale_x_discrete(breaks = seq(1991, 2012, by = 5)) +
+  scale_y_continuous(limits = c(6, 8), breaks = seq(6, 8, by = 0.5)) +
+  # remove the legend (not much point when there's only one line!)
+  theme(legend.position="none")
+
+```
+
+
+We begin to see the improvements in mortality if we look across the age ranges (along the bottom axis). Even at this scale it is possible to see that fewer infants are dying before their first birthday. And the gap begins to widen starting at the 60-64 age group.
+
+
+```{r, echo=FALSE, message=FALSE}
+
+# filter to include the age categories
+
+
+data_mortalityrate_annual <- mortalityrate %>%
+  select(-Age) %>%
+  gather(year, mort_rate, -Age1, -Sex) %>%
+  filter(Sex == "Both sexes", Age1 != "all ages")
+
+#head(data_mortalityrate_annual)
+#ls.str(data_mortalityrate_annual)
+
+
+year_list <- c(1991, 2012)
+
+data_mortalityrate_91_12 <- data_mortalityrate_annual %>%
+  filter(year %in% year_list) 
+
+#head(data_mortalityrate_91_12)
+#tail(data_mortalityrate_91_12)
+
+
+# --------
+
+
+# basic
+plot_mort_91_12 <- 
+  ggplot(data_mortalityrate_91_12, aes(x=Age1, y=mort_rate, group=year, colour=year)) +
+  geom_line(size=1.5)
+
+# basic plot
+#plot_mort_91_12
+
+# fix the formatting
+
+plot_mort_91_12 +
+  theme_BCStats +
+  scale_colour_manual(values=palette_BCStats) +
+  ggtitle("British Columbia, Total mortality, 1991-2012") +
+  ylab("mortality rate") +
+#  scale_x_discrete(breaks = seq(1991, 2012, by = 5)) +
+  scale_y_continuous(limits = c(0, 225), breaks = seq(0, 200, by = 50)) +
+  # put the legend in the top left corner
+  theme(legend.position = c(0.15, 0.75))
+
+
+```
+
+**Note**: running into William Playfair's balance of trade visualization problem here. Would be better to show the improvement.
+
+
+-30-
