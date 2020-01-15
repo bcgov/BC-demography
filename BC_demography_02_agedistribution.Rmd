@@ -9,6 +9,7 @@ output: html_document
 
 ### data
 
+
 Source:
 Statistics Canada, CANSIM 
 [Population estimates on July 1st, by age and sex](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710000501)
@@ -20,7 +21,7 @@ The source file contains population for Canada, the provinces and territories, b
 Source file:  (https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710000501)
 
 
-The CANSIM extract requires some carpentry to be useful for the purposes of this plotting. The tidied version becomes a data frame `data_age_groupdistrib_BC_2016`.
+The CANSIM extract requires some carpentry to be useful for the purposes of this plotting. The tidied version becomes a data frame `data_age_groupdistrib_BC_2019`.
 
 **Notes:** 
 
@@ -31,20 +32,18 @@ The CANSIM extract requires some carpentry to be useful for the purposes of this
 
 ```{r setup, echo=FALSE, message_group=FALSE}
 
-# load the necessary package_groups
 # data manipulation
-library(readr)
-library(tidyr)
-library(dplyr)
-# graphics
-library(ggplot2)
-library(scales)
+library(tidyverse)
 # tables
 library(xtable)
-# install necessary package_groups
 # utilities
-library(zoo)
+library(here)
 library(janitor)
+#
+library(zoo)
+library(scales)
+#
+library(cansim)
 
 # PLOTTING ESSENTIALS
 
@@ -56,8 +55,8 @@ theme_BCStats <-
   theme(
     panel.border = element_rect(colour="white"),
     axis.line = element_line(colour="black"),
-    legend.position=c(1,0), 
-    legend.justification=c(1,0),
+#    legend.position=c(1,0), 
+#    legend.justification=c(1,0),
     legend.title = element_text(size=12),
     legend.text = element_text(size=11),
     axis.title = element_text(size=16),
@@ -76,57 +75,55 @@ palette_BCStats_fill <- c("#3F3F3F", "#ABABAB", "#DFDFDF", "#969696", "#838383",
 
 ```
 
+Read and clean data
 
-
-```{r, echo=FALSE, message_group=FALSE}
+```{r read_data, echo=FALSE, message_group=FALSE}
 
 # read the data
-# setwd("C:/@data/GitHub/BC-demography")
-#
+df_1710000501 <- get_cansim("17-10-0005-01")
 
-data_age_groupdistrib <- read_csv("./data_source/17100005.csv", 
-                            col_types = cols(
-                              STATUS = col_character()
-                            ))
+df_1710000501 <- clean_names(df_1710000501)
 
-data_age_groupdistrib <- clean_names(data_age_groupdistrib)
+
+
 
 ```
 
 
-oops the code below is an attempt to make a single table of all the years but I forgot about the switch from 90+ to 100+ as age categories ... a case for `case_when()`
+
+
+
+Filter so that only single year categories remain (i.e. age 0, 1, 2, etc)
+
+**Note:** the years up to and including 2000 include "90 years and over" as the oldest category; in 2001 the years 90-99 were included as single years, and the oldest category became "100 years and over". To make a data frame with single categories
+
+* for those years, the 90+ category needs to be reframed as the single year "90"
+
+* for the other years, the 90+ category needs to be dropped entirely
+
+```{r}
+
+# # getting the lay of the data
+# ls.str(df_1710000501)
+# 
+# unique(df_1710000501$age_group)
+# unique(df_1710000501$geo)
+# unique(df_1710000501$ref_date)
+# unique(df_1710000501$sex)
+# 
+# df_1710000501 %>% 
+#   filter(sex == "Both sexes",
+# #         age_group == "100 years and over", 
+#          age_group == "99 years", 
+#          geo == "Canada")
+
+```
 
 
 ```{r}
 
-
-ls.str(data_age_groupdistrib)
-
-unique(data_age_groupdistrib$age_group)
-unique(data_age_groupdistrib$geo)
-unique(data_age_groupdistrib$ref_date)
-unique(data_age_groupdistrib$sex)
-
-# -------------------------------------
-
-drop.age_group.vals_2 <- c("All ages", "0 to 4 years", "5 to 9 years",
-                   "10 to 14 years", "15 to 19 years", 
-                   "20 to 24 years", "25 to 29 years", 
-                   "30 to 34 years", "35 to 39 years", 
-                   "40 to 44 years", "45 to 49 years", 
-                   "50 to 54 years", "55 to 59 years", 
-                   "60 to 64 years", "65 to 69 years", 
-                   "70 to 74 years", "75 to 79 years", 
-                   "80 to 84 years", "85 to 89 years", 
-                   "90 to 94 years", "95 to 99 years",
-                   "0 to 14 years", "0 to 15 years", "0 to 16 years", "0 to 17 years",
-                   "15 to 49 years", "15 to 64 years", "16 to 64 years", "17 to 64 years",
-                   "18 years and over", "18 to 64 years", "18 to 24 years", "25 to 44 years",
-                   "45 to 64 years", "65 years and over", "90 years and over", 
-                   "Median age")
-
-
-drop.age_group.vals_1 <- c("All age_groups", "0 to 4 years", "5 to 9 years",
+# age category values to drop
+drop.age_group.vals_1 <- c("All ages", "0 to 4 years", "5 to 9 years",
                    "10 to 14 years", "15 to 19 years", 
                    "20 to 24 years", "25 to 29 years", 
                    "30 to 34 years", "35 to 39 years", 
@@ -140,58 +137,68 @@ drop.age_group.vals_1 <- c("All age_groups", "0 to 4 years", "5 to 9 years",
                    "15 to 49 years", "15 to 64 years", "16 to 64 years", "17 to 64 years",
                    "18 years and over", "18 to 64 years", "18 to 24 years", "25 to 44 years",
                    "45 to 64 years", "65 years and over", 
-#                   "90 years and over", 
-#                   "100 years and over", 
-                   "Median age_group (years)")
+                   "Median age")
 
-drop.age_group.vals_1
+df_single <- df_1710000501 %>% 
+  filter(!age_group %in% drop.age_group.vals_1)
 
-# filter out the values
-data_age_groupdistrib_single <- data_age_groupdistrib %>%
-  filter(!age_group %in% drop.age_group.vals_2)
+df_single_1971 <- df_single %>% 
+  filter(ref_date < 2001) %>% 
+  mutate(age_group.num = gsub(" years", "", age_group)) %>% 
+  mutate(age_group.num = gsub(" year", "", age_group.num)) %>% 
+  mutate(age_group.num = gsub(" and over",  "", age_group.num)) %>% 
+  mutate(age_group.num = as.integer(age_group.num))
 
-# check the list again
-unique(data_age_groupdistrib_single$age_group)
+df_single_2001 <- df_single %>% 
+  filter(ref_date > 2000) %>% 
+  filter(age_group != "90 years and over") %>% 
+  mutate(age_group.num = gsub(" years", "", age_group)) %>% 
+  mutate(age_group.num = gsub(" year", "", age_group.num)) %>% 
+  mutate(age_group.num = gsub(" and over",  "", age_group.num)) %>% 
+  mutate(age_group.num = as.integer(age_group.num))
+  
+data_age_groupdistrib_single <- rbind(df_single_1971, df_single_2001)  
 
-
-# create a new variable age_group.num that converts the age_group variable to an integer 
-# (instead of a string that has " year" AND no padding, so an alpha sort will yield inappropriate results)
-# step 1: use gsub to replace " years" (and its variants) with blank in string
-# step 2: set as.integer
-data_age_groupdistrib_single$age_group.num <- gsub(" years", "", data_age_groupdistrib_single$age_group)
-data_age_groupdistrib_single$age_group.num <- gsub(" year", "", data_age_groupdistrib_single$age_group.num)
-data_age_groupdistrib_single$age_group.num <- as.integer(gsub(" and over", "", data_age_groupdistrib_single$age_group.num))
-
-unique(data_age_groupdistrib_single$age_group.num)
 
 ```
+
 
 
 ```{r}
 
-# filter for British Columbia, both sexes, 2016 distribution
+data_age_groupdistrib_single <- data_age_groupdistrib_single %>% 
+  mutate(ref_date_year = as.integer(ref_date)) %>% 
+  # add pct of year (by geo and sex)
+  group_by(geo, ref_date, sex) %>% 
+  mutate(year_pct = (value / sum(value) * 100)) %>% 
+  ungroup()
 
-data_age_groupdistrib_BC_2016 <- data_age_groupdistrib %>%
-  select(geo, ref_date, sex, age_group,  value) %>%
-  filter(geo == "British Columbia") %>%
-  filter(ref_date == "2016") %>%
-  filter(sex == "Both sexes")
-
-ls.str(data_age_groupdistrib_BC_2016)
-
-unique(data_age_groupdistrib_BC_2016$age_group)
-unique(data_age_groupdistrib_BC_2016$geo)
-unique(data_age_groupdistrib_BC_2016$ref_date)
-unique(data_age_groupdistrib_BC_2016$sex)
-
-# calculate percentage_group of total population for each age_group group
-data_age_groupdistrib_BC_2016 <- data_age_groupdistrib_BC_2016 %>%
-  mutate(year_pct = (value / sum(value) * 100)) 
-
+# quick test
+data_age_groupdistrib_single %>% 
+  filter(geo == "British Columbia",
+         ref_date == "2019",
+         sex == "Both sexes") %>% 
+  summarise(total_pop = sum(value),
+            total_pct = sum(year_pct))
 
 ```
 
-### Plot: age_group distribution, British Columbia 2016
+
+
+
+```{r}
+
+# filter for British Columbia, both sexes, 2019 distribution
+
+data_age_groupdistrib_BC_2019 <- data_age_groupdistrib_single %>%
+  select(geo, ref_date, sex, age_group,  value, age_group.num) %>%
+  filter(geo == "British Columbia") %>%
+  filter(ref_date == "2019") %>%
+  filter(sex == "Both sexes")
+
+```
+
+### Plot: age_group distribution, British Columbia 2019
 
 This set of charts shows the distribution of the B.C. population, by one year age_group groups.
 
@@ -207,36 +214,43 @@ The first version of the plot is a basic version. The second version adds an ass
 Note that the X axis scale is such that it follows the five year increments of the Census of Canada.
 
 
+```{r chart_text}
+
+txt_caption <- "Source: Statistics Canada, CANSIM Table 17-10-0005-01"
+
+```
+
+
 
 ```{r}
 
 # basic
-plot_age_groupdist_BC_2016 <- ggplot(data_age_groupdistrib_BC_2016, aes(x=age_group.num, y=value)) +
+plot_age_groupdist_BC_2019 <- ggplot(data_age_groupdistrib_BC_2019, aes(x=age_group.num, y=value)) +
   geom_bar(stat="identity", fill="#234275")
 
-plot_age_groupdist_BC_2016
+plot_age_groupdist_BC_2019
 
 
 # Add formatting
 
-plot_age_groupdist_BC_2016 <- plot_age_groupdist_BC_2016 +
+plot_age_groupdist_BC_2019 <- plot_age_groupdist_BC_2019 +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
-  labs(title = "British Columbia: age_group distribution (total)",
+  labs(title = "British Columbia: age distribution (total)",
        subtitle = "2016",
-       y = "population", x = "age_group",
-       caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
+       y = "population", x = "age",
+       caption = txt_caption) +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
 #  scale_x_discrete(breaks = c("10", "20", "30", "40", "50", 
 #                              "60", "70", "80", "90", "100+")) +
   scale_y_continuous(limits = c(0, 90000), breaks = seq(0, 90000, by = 10000),
                      labels = comma)
 
-plot_age_groupdist_BC_2016
+plot_age_groupdist_BC_2019
 
 # save the plot as a png file
-png("plot_age_groupdist_BC_2016.png", width=1024, height=768, res=120)
-plot(plot_age_groupdist_BC_2016)
+png("plot_age_groupdist_BC_2019.png", width=1024, height=768, res=120)
+plot(plot_age_groupdist_BC_2019)
 dev.off()
   
 ```
@@ -247,30 +261,30 @@ Repeat, but with percentage_group
 ```{r}
 
 # basic
-plot_age_groupdist_BC_2016_pct <- ggplot(data_age_groupdistrib_BC_2016, aes(x=age_group.num, y=year_pct)) +
+plot_age_groupdist_BC_2019_pct <- ggplot(data_age_groupdistrib_BC_2019, aes(x=age_group.num, y=year_pct)) +
   geom_bar(stat="identity", fill="#234275")
 
-plot_age_groupdist_BC_2016_pct
+plot_age_groupdist_BC_2019_pct
 
 
 # Add formatting
 
-plot_age_groupdist_BC_2016_pct <- plot_age_groupdist_BC_2016_pct +
+plot_age_groupdist_BC_2019_pct <- plot_age_groupdist_BC_2019_pct +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
   labs(title = "British Columbia: age distribution (percentage)",
-       subtitle = "2016",
-       y = "population", x = "age_group",
-       caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
+       subtitle = "2019",
+       y = "population", x = "age",
+       caption = txt_caption) +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
   scale_y_continuous(limits = c(0, 2.25), breaks = seq(0, 2.0, by = 0.5)) 
 
-plot_age_groupdist_BC_2016_pct
+plot_age_groupdist_BC_2019_pct
 
 
 # save the plot as a png file
-png("plot_age_groupdist_BC_2016_pct.png", width=1024, height=768, res=120)
-plot(plot_age_groupdist_BC_2016_pct)
+png("plot_age_groupdist_BC_2019_pct.png", width=1024, height=768, res=120)
+plot(plot_age_groupdist_BC_2019_pct)
 dev.off()
   
 ```
@@ -280,16 +294,16 @@ dev.off()
 
 # highlight the boomers
 
-plot_age_groupdist_BC_2016_shade <- plot_age_groupdist_BC_2016 +
+plot_age_groupdist_BC_2019_shade <- plot_age_groupdist_BC_2019 +
   # add shaded rectangle for the projection range
-  annotate("rect", xmin=50, xmax=70, ymin=0, ymax=90000, alpha=0.1, fill="blue") +
-  annotate("text", x=60, y=77000,  label="Boomers")
+  annotate("rect", xmin=54, xmax=73, ymin=0, ymax=89750, alpha=0.1, fill="blue") +
+  annotate("text", x=60, y=85000,  label="Boomers")
 
-plot_age_groupdist_BC_2016_shade
+plot_age_groupdist_BC_2019_shade
 
 # save the plot as a png file
-png("plot_age_groupdist_BC_2016_shade.png", width=1024, height=768, res=120)
-plot(plot_age_groupdist_BC_2016_shade)
+png("plot_age_groupdist_BC_2019_shade.png", width=1024, height=768, res=120)
+plot(plot_age_groupdist_BC_2019_shade)
 dev.off()
   
 
@@ -305,137 +319,38 @@ The total population of British Columbia has increased from 2.2 million in 1971 
 Not really a density plot at all! A density plot is essentially an extension of a histogram calculation; here the histogram is pre-calculated, so that the solution is a loess smoothing line.  Some eye-balling suggests that a span = 0.3 is a pretty good approximation (see below).
 
 
-Having two smoothed lines representing the top of the bars is aneffective way to compare the distribution of the population at two or three points in time.
+Having two smoothed lines representing the top of the bars is an effective way to compare the distribution of the population at two or three points in time.
 
-First, create a cleaned up version of the data for 1971.
-
-Note that the age_group categories are different than those used for 2016!
-
-```{r}
-# filter for British Columbia, both sexes, 1971 distribution
-
-data_age_groupdistrib_BC_1971 <- data_age_groupdistrib %>%
-  select(geo, ref_date, sex, age_group,  value) %>%
-  filter(geo == "British Columbia") %>%
-  filter(ref_date == "1971") %>%
-  filter(sex == "Both sexes")
-
-ls.str(data_age_groupdistrib_BC_1971)
-
-unique(data_age_groupdistrib_BC_1971$age_group)
-unique(data_age_groupdistrib_BC_1971$geo)
-unique(data_age_groupdistrib_BC_1971$ref_date)
-unique(data_age_groupdistrib_BC_1971$sex)
-
-
-drop.age_group.vals_1 <- c("All age_groups", "0 to 4 years", "5 to 9 years",
-                   "10 to 14 years", "15 to 19 years", 
-                   "20 to 24 years", "25 to 29 years", 
-                   "30 to 34 years", "35 to 39 years", 
-                   "40 to 44 years", "45 to 49 years", 
-                   "50 to 54 years", "55 to 59 years", 
-                   "60 to 64 years", "65 to 69 years", 
-                   "70 to 74 years", "75 to 79 years", 
-                   "80 to 84 years", "85 to 89 years", 
-                   "90 to 94 years", "95 to 99 years",
-                   "0 to 14 years", "0 to 15 years", "0 to 16 years", "0 to 17 years",
-                   "15 to 49 years", "15 to 64 years", "16 to 64 years", "17 to 64 years",
-                   "18 years and over", "18 to 64 years", "18 to 24 years", "25 to 44 years",
-                   "45 to 64 years", "65 years and over", 
-#                   "90 years and over", 
-#                   "100 years and over", 
-                   "Median age_group (years)")
-
-drop.age_group.vals_1
-
-# filter out the values
-data_age_groupdistrib_BC_1971 <- data_age_groupdistrib_BC_1971 %>%
-  filter(!age_group %in% drop.age_group.vals_1)
-
-# check the list again
-unique(data_age_groupdistrib_BC_1971$age_group)
-
-
-# create a new variable age_group.num that converts the age_group variable to an integer 
-# (instead of a string that has " year" AND no padding, so an alpha sort will yield inappropriate results)
-# step 1: use gsub to replace " years" (and its variants) with blank in string
-# step 2: set as.integer
-data_age_groupdistrib_BC_1971$age_group.num <- gsub(" years", "", data_age_groupdistrib_BC_1971$age_group)
-data_age_groupdistrib_BC_1971$age_group.num <- gsub(" year", "", data_age_groupdistrib_BC_1971$age_group.num)
-data_age_groupdistrib_BC_1971$age_group.num <- as.integer(gsub(" and over", "", data_age_groupdistrib_BC_1971$age_group.num))
-
-unique(data_age_groupdistrib_BC_1971$age_group.num)
-
-# calculate percentage_group of total population for each age_group group
-data_age_groupdistrib_BC_1971 <- data_age_groupdistrib_BC_1971 %>%
-  mutate(year_pct = (value / sum(value) * 100)) 
-
-
-```
-
-**NOTE**
-
-Not functionally required; leave in Just In Case (set eval=FALSE).
-
-Merge 1971 data frame with 2016
-
-```{r eval=FALSE}
-
-data_age_groupdistrib_BC_19712016 <- rbind(data_age_groupdistrib_BC_1971, data_age_groupdistrib_BC_2016)
-
-ls.str(data_age_groupdistrib_BC_19712016)
-unique(data_age_groupdistrib_BC_19712016$age_group.num)
-
-head(data_age_groupdistrib_BC_19712016)
-tail(data_age_groupdistrib_BC_19712016)
-
-
-```
 
 
 Plot with curves
 
 ```{r}
-# regular 2016 plot
+# regular 2019 plot
 
-ls.str(data_age_groupdistrib_BC_2016)
-
-ggplot(data_age_groupdistrib_BC_2016, aes(x=age_group.num, y=year_pct)) +
-  geom_bar(stat="identity", fill="#234275")
-
-# add smoothing line
-ggplot(data_age_groupdistrib_BC_2016, aes(x=age_group.num, y=year_pct)) +
-  geom_bar(stat="identity", fill="#234275") +
-  geom_smooth(span = 0.3)
-
-# no bars, just smoothing line
-ggplot(data_age_groupdistrib_BC_2016, aes(x=age_group.num, y=year_pct)) +
+plot_smooth_years <- data_age_groupdistrib_single %>% 
+  filter(geo == "British Columbia" & sex == "Both sexes") %>% 
+  filter(ref_date_year == 1971 | ref_date_year == 2019) %>% 
+  ggplot(aes(x=age_group.num, y=value, colour = ref_date)) +
   geom_smooth(span = 0.3, se = FALSE)
 
-
-# combined plot: absolute
-ggplot(data_age_groupdistrib_BC_2016, aes(x=age_group.num, y=value)) +
-  geom_smooth(span = 0.3, se = FALSE) +
-  geom_smooth(data = data_age_groupdistrib_BC_1971, span = 0.3, se = FALSE)
-
-# combined plot: absolute
-plot_smooth_years <- ggplot(data_age_groupdistrib_BC_2016, aes(x=age_group.num, y=value)) +
-  geom_smooth(span = 0.3, se = FALSE, colour = "#234275") +
-  geom_smooth(data = data_age_groupdistrib_BC_1971, span = 0.3, se = FALSE, colour = "#E3A82B") +
-  annotate("text", x=19, y=35000, label = "1971", colour =  "#234275", fontface = 2) +
-  annotate("text", x=68, y=35000, label = "2016", colour =  "#234275", fontface = 2)
-
+plot_smooth_years
 
 plot_smooth_years <- plot_smooth_years +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
   labs(title = "British Columbia: age distribution (total)",
-       subtitle = "1971 & 2016",
-       y = "population", x = "age_group",
-       caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
+       subtitle = "1971 & 2019",
+       y = "population", x = "age",
+       caption = txt_caption) +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
   scale_y_continuous(limits = c(0, 90000), breaks = seq(0, 90000, by = 10000),
-                     labels = comma)
+                     labels = comma) +
+  theme(
+    legend.position = c(1, 1),
+    legend.justification = c("right", "top"),
+    legend.title = element_blank()
+  )
 
 plot_smooth_years
 
@@ -448,11 +363,16 @@ dev.off()
 
 ```
 
+
+## _RESUME HERE_
+
+
+
 ```{r}
 
 
 # combined plot: percentage_group
-plot_smooth_pct <- ggplot(data_age_groupdistrib_BC_2016, aes(x=age_group.num, y=year_pct)) +
+plot_smooth_pct <- ggplot(data_age_groupdistrib_BC_2019, aes(x=age_group.num, y=year_pct)) +
   geom_smooth(span = 0.3, se = FALSE, colour = "#234275") +
   geom_smooth(data = data_age_groupdistrib_BC_1971, span = 0.3, se = FALSE, colour = "#E3A82B") +
   annotate("text", x=20, y=2.0, label = "1971", colour =  "#234275", fontface = 2) +
@@ -561,7 +481,7 @@ ggplot(data_age_groupdistrib_BC_2041, aes(x=age_group.num, y=value)) +
 
 
 # combined plot: absolute
-plot_smooth_years2 <- ggplot(data_age_groupdistrib_BC_2016, aes(x=age_group.num, y=value)) +
+plot_smooth_years2 <- ggplot(data_age_groupdistrib_BC_2019, aes(x=age_group.num, y=value)) +
   geom_smooth(span = 0.25, se = FALSE, colour = "#234275") +
   geom_smooth(data = data_age_groupdistrib_BC_1971, span = 0.25, se = FALSE, colour = "#E3A82B") +
   geom_smooth(data = data_age_groupdistrib_BC_2041, span = 0.25, se = FALSE, colour = "#26BDEF") +
@@ -594,7 +514,7 @@ dev.off()
 
 # combined plot: percentage_group distribution
 
-plot_smooth_pct2 <- ggplot(data_age_groupdistrib_BC_2016, aes(x=age_group.num, y=year_pct)) +
+plot_smooth_pct2 <- ggplot(data_age_groupdistrib_BC_2019, aes(x=age_group.num, y=year_pct)) +
   geom_smooth(span = 0.3, se = FALSE, colour = "#234275") +
   geom_smooth(data = data_age_groupdistrib_BC_1971, span = 0.3, se = FALSE, colour = "#E3A82B") +
   geom_smooth(data = data_age_groupdistrib_BC_2041, span = 0.3, se = FALSE, colour = "#26BDEF") +
