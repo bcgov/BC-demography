@@ -32,14 +32,18 @@ The CANSIM extract requires some carpentry to be useful for the purposes of this
 
 ```{r setup, echo=FALSE, message_group=FALSE}
 
-# data manipulation
+# tidyverse
 library(tidyverse)
-# tables
-library(xtable)
+
 # utilities
 library(here)
 library(janitor)
 #
+# tables
+library(xtable)
+#
+# plotting
+library(gganimate)
 library(zoo)
 library(scales)
 #
@@ -71,6 +75,9 @@ palette_BCStats <- c("#234275", "#E3A82B", "#26BDEF", "#11CC33", "#D3E2ED", "8A8
 # grayscale for fill (use with scale_fill_manual)
 palette_BCStats_fill <- c("#3F3F3F", "#ABABAB", "#DFDFDF", "#969696", "#838383", "8A8A8A")
 
+
+#
+txt_caption <- "Source: Statistics Canada, CANSIM Table 17-10-0005-01"
 
 
 ```
@@ -117,10 +124,7 @@ Filter so that only single year categories remain (i.e. age 0, 1, 2, etc)
 #          age_group == "99 years", 
 #          geo == "Canada")
 
-```
 
-
-```{r}
 
 # age category values to drop
 drop.age_group.vals_1 <- c("All ages", "0 to 4 years", "5 to 9 years",
@@ -191,7 +195,7 @@ data_age_groupdistrib_single %>%
 # filter for British Columbia, both sexes, 2019 distribution
 
 data_age_groupdistrib_BC_2019 <- data_age_groupdistrib_single %>%
-  select(geo, ref_date, sex, age_group,  value, age_group.num) %>%
+  select(geo, ref_date, sex, age_group,  age_group.num, value, year_pct) %>%
   filter(geo == "British Columbia") %>%
   filter(ref_date == "2019") %>%
   filter(sex == "Both sexes")
@@ -214,12 +218,6 @@ The first version of the plot is a basic version. The second version adds an ass
 Note that the X axis scale is such that it follows the five year increments of the Census of Canada.
 
 
-```{r chart_text}
-
-txt_caption <- "Source: Statistics Canada, CANSIM Table 17-10-0005-01"
-
-```
-
 
 
 ```{r}
@@ -237,7 +235,7 @@ plot_age_groupdist_BC_2019 <- plot_age_groupdist_BC_2019 +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
   labs(title = "British Columbia: age distribution (total)",
-       subtitle = "2016",
+       subtitle = "2019",
        y = "population", x = "age",
        caption = txt_caption) +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
@@ -292,12 +290,22 @@ dev.off()
 
 ```{r}
 
-# highlight the boomers
+# highlight the generations
+
+# baby boom (in Canada): 1946 - 1965
+# gen X: 1966 - 1980
+# millenials: 1981 - 1995
+
 
 plot_age_groupdist_BC_2019_shade <- plot_age_groupdist_BC_2019 +
   # add shaded rectangle for the projection range
-  annotate("rect", xmin=54, xmax=73, ymin=0, ymax=89750, alpha=0.1, fill="blue") +
-  annotate("text", x=60, y=85000,  label="Boomers")
+  annotate("rect", xmin=54, xmax=73, ymin=0, ymax=89750, alpha=0.1, fill="green") +
+  annotate("text", x=60, y=85000,  label="Boomers") +
+  annotate("rect", xmin=39, xmax=54, ymin=0, ymax=89750, alpha=0.1, fill="blue") +
+  annotate("text", x=43, y=85000,  label="GenX") +
+  annotate("rect", xmin=24, xmax=39, ymin=0, ymax=89750, alpha=0.1, fill="red") +
+  annotate("text", x=30, y=85000,  label="Millenials") 
+  
 
 plot_age_groupdist_BC_2019_shade
 
@@ -310,7 +318,8 @@ dev.off()
 ```
 
 
-The total population of British Columbia has increased from 2.2 million in 1971 to 4.7 million in 2015. The population surpassed 3 million in 1986, and 4 million in 1999.
+The total population of British Columbia has increased from 2.2 million in 1971 to 5.1 million in 2019. The population surpassed 3 million in 1986, and 4 million in 1999.
+
 
 #### Density Plot
 
@@ -360,6 +369,39 @@ plot(plot_smooth_years)
 dev.off()
   
 
+
+```
+
+
+## animate
+
+
+```{r}
+
+p <- data_age_groupdistrib_single %>% 
+  filter(geo == "British Columbia" & sex == "Both sexes") %>% 
+  #
+  ggplot(aes(x=age_group.num, y=value)) +
+  geom_bar(stat="identity", fill="#234275") +
+  theme_BCStats +
+  scale_colour_manual(values=palette_BCStats) +
+  labs(title = "British Columbia: age distribution (total)",
+#       subtitle = "2019",
+       y = "population", x = "age",
+       caption = txt_caption) +
+  scale_x_continuous(breaks = seq(0, 100, 10)) +
+#  scale_x_discrete(breaks = c("10", "20", "30", "40", "50", 
+#                              "60", "70", "80", "90", "100+")) +
+  scale_y_continuous(limits = c(0, 90000), breaks = seq(0, 90000, by = 10000),
+                     labels = comma) +
+  # gganimate
+  transition_time(ref_date_year) +
+  labs(subtitle = "Year: {frame_time}")
+
+
+p
+
+anim_save("BC_pop_dist_anim.gif")
 
 ```
 
