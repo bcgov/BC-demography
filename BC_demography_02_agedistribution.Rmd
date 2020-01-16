@@ -395,11 +395,14 @@ p <- data_age_groupdistrib_single %>%
   scale_y_continuous(limits = c(0, 90000), breaks = seq(0, 90000, by = 10000),
                      labels = comma) +
   # gganimate
+#  transition_time(ref_date_year) +
   transition_time(ref_date_year) +
   labs(subtitle = "Year: {frame_time}")
 
 
 p
+
+animate(p, duration = 30)
 
 anim_save("BC_pop_dist_anim.gif")
 
