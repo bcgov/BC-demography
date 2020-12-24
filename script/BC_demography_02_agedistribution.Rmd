@@ -19,7 +19,7 @@ See the License for the specific language governing permissions and limitations 
 -->
 
 
-## Plot the age distribution of British Columbia & Canada, 1971-2019
+## Plot the age distribution of British Columbia & Canada, 1971–present
 
 ### data
 
@@ -30,7 +30,7 @@ Statistics Canada, CANSIM
 
 Table: 17-10-0005-01 (formerly CANSIM 051-0001)
 
-The source file contains population for Canada, the provinces and territories, by age (and age group), and by sex, for the years 1976-2019 (as of this writing).
+The source file contains population for Canada, the provinces and territories, by age (and age group), and by sex, for the years 1976-2020 (as of this writing).
 
 Source file:  (https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710000501)
 
@@ -206,17 +206,20 @@ data_age_groupdistrib_single %>%
 
 ```{r}
 
-# filter for British Columbia, both sexes, 2019 distribution
+# filter for British Columbia, both sexes, most recent year distribution
 
-data_age_groupdistrib_BC_2019 <- data_age_groupdistrib_single %>%
+year_min <- min(data_age_groupdistrib_single$ref_date)
+year_max <- max(data_age_groupdistrib_single$ref_date)
+
+data_age_groupdistrib_BC_max <- data_age_groupdistrib_single %>%
   select(geo, ref_date, sex, age_group,  age_group.num, value, year_pct) %>%
   filter(geo == "British Columbia") %>%
-  filter(ref_date == "2019") %>%
+  filter(ref_date == year_max) %>%
   filter(sex == "Both sexes")
 
 ```
 
-### Plot: age_group distribution, British Columbia 2019
+### Plot: age_group distribution, British Columbia `r year_max`
 
 This set of charts shows the distribution of the B.C. population, by one year age_group groups.
 
@@ -233,23 +236,22 @@ Note that the X axis scale is such that it follows the five year increments of t
 
 
 
-
 ```{r}
 
 # basic
-plot_age_groupdist_BC_2019 <- ggplot(data_age_groupdistrib_BC_2019, aes(x=age_group.num, y=value)) +
+plot_age_groupdist_BC_max <- ggplot(data_age_groupdistrib_BC_max, aes(x=age_group.num, y=value)) +
   geom_bar(stat="identity", fill="#234275")
 
-plot_age_groupdist_BC_2019
+plot_age_groupdist_BC_max
 
 
 # Add formatting
 
-plot_age_groupdist_BC_2019 <- plot_age_groupdist_BC_2019 +
+plot_age_groupdist_BC_max <- plot_age_groupdist_BC_max +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
   labs(title = "British Columbia: age distribution (total)",
-       subtitle = "2019",
+       subtitle = year_max,
        y = "population", x = "age",
        caption = txt_caption) +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
@@ -258,13 +260,13 @@ plot_age_groupdist_BC_2019 <- plot_age_groupdist_BC_2019 +
   scale_y_continuous(limits = c(0, 90000), breaks = seq(0, 90000, by = 10000),
                      labels = comma)
 
-plot_age_groupdist_BC_2019
+plot_age_groupdist_BC_max
 
 # save the plot as a png file
-png("plot_age_groupdist_BC_2019.png", width=1024, height=768, res=120)
-plot(plot_age_groupdist_BC_2019)
-dev.off()
-  
+plot_file_name <- glue('plot_age_groupdist_BC_{year_max}.png')
+ggsave(plot_file_name, width=9, height=6)
+
+
 ```
 
 
@@ -273,32 +275,31 @@ Repeat, but with percentage_group
 ```{r}
 
 # basic
-plot_age_groupdist_BC_2019_pct <- ggplot(data_age_groupdistrib_BC_2019, aes(x=age_group.num, y=year_pct)) +
+plot_age_groupdist_BC_max_pct <- ggplot(data_age_groupdistrib_BC_max, aes(x=age_group.num, y=year_pct)) +
   geom_bar(stat="identity", fill="#234275")
 
-plot_age_groupdist_BC_2019_pct
+plot_age_groupdist_BC_max_pct
 
 
 # Add formatting
 
-plot_age_groupdist_BC_2019_pct <- plot_age_groupdist_BC_2019_pct +
+plot_age_groupdist_BC_max_pct <- plot_age_groupdist_BC_max_pct +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
   labs(title = "British Columbia: age distribution (percentage)",
-       subtitle = "2019",
+       subtitle = year_max,
        y = "population", x = "age",
        caption = txt_caption) +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
   scale_y_continuous(limits = c(0, 2.25), breaks = seq(0, 2.0, by = 0.5)) 
 
-plot_age_groupdist_BC_2019_pct
+plot_age_groupdist_BC_max_pct
 
 
 # save the plot as a png file
-png("plot_age_groupdist_BC_2019_pct.png", width=1024, height=768, res=120)
-plot(plot_age_groupdist_BC_2019_pct)
-dev.off()
-  
+plot_file_name <- glue('plot_age_groupdist_BC_{year_max}_pct.png')
+ggsave(plot_file_name, width=9, height=6)
+
 ```
 
 
@@ -311,23 +312,35 @@ dev.off()
 # millenials: 1981 - 1995
 
 
-plot_age_groupdist_BC_2019_shade <- plot_age_groupdist_BC_2019 +
+boomer_max <- as.integer(year_max) - 1946
+boomer_min <- as.integer(year_max) - 1965
+genx_max <- as.integer(year_max) - 1965
+genx_min <- as.integer(year_max) - 1980
+millen_max <- as.integer(year_max) - 1980
+millen_min <- as.integer(year_max) - 1995
+
+
+plot_age_groupdist_BC_max_shade <- plot_age_groupdist_BC_max +
   # add shaded rectangle for the projection range
-  annotate("rect", xmin=54, xmax=73, ymin=0, ymax=89750, alpha=0.1, fill="green") +
-  annotate("text", x=60, y=85000,  label="Boomers") +
-  annotate("rect", xmin=39, xmax=54, ymin=0, ymax=89750, alpha=0.1, fill="blue") +
-  annotate("text", x=43, y=85000,  label="GenX") +
-  annotate("rect", xmin=24, xmax=39, ymin=0, ymax=89750, alpha=0.1, fill="red") +
-  annotate("text", x=30, y=85000,  label="Millenials") 
+  # boomer
+  annotate("rect", xmin=boomer_min, xmax=boomer_max, ymin=0, ymax=89750, alpha=0.1, fill="green") +
+  annotate("text", x=(boomer_min + 6), y=85000,  label="Boomers") +
+  # gen X
+  annotate("rect", xmin=genx_min, xmax=genx_max, ymin=0, ymax=89750, alpha=0.1, fill="blue") +
+  annotate("text", x=(genx_min + 5), y=85000,  label="GenX") +
+  # avocado toast
+  annotate("rect", xmin=millen_min, xmax=millen_max, ymin=0, ymax=89750, alpha=0.1, fill="red") +
+  annotate("text", x=(millen_min + 6), y=85000,  label="Millenials") 
   
 
-plot_age_groupdist_BC_2019_shade
+plot_age_groupdist_BC_max_shade
 
 # save the plot as a png file
-png("plot_age_groupdist_BC_2019_shade.png", width=1024, height=768, res=120)
-plot(plot_age_groupdist_BC_2019_shade)
-dev.off()
-  
+# save the plot as a png file
+plot_file_name <- glue('plot_age_groupdist_BC_{year_max}_shade.png')
+ggsave(plot_file_name, width=9, height=6)
+
+
 
 ```
 
@@ -349,11 +362,11 @@ Having two smoothed lines representing the top of the bars is an effective way t
 Plot with curves
 
 ```{r}
-# regular 2019 plot
+# regular plot -- most recent year
 
 plot_smooth_years <- data_age_groupdistrib_single %>% 
   filter(geo == "British Columbia" & sex == "Both sexes") %>% 
-  filter(ref_date_year == 1971 | ref_date_year == 2019) %>% 
+  filter(ref_date_year == year_min | ref_date_year == year_max) %>% 
   ggplot(aes(x=age_group.num, y=value, colour = ref_date)) +
   geom_smooth(span = 0.3, se = FALSE)
 
@@ -363,7 +376,7 @@ plot_smooth_years <- plot_smooth_years +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
   labs(title = "British Columbia: age distribution (total)",
-       subtitle = "1971 & 2019",
+       subtitle = glue('{year_min} & {year_max}'),
        y = "population", x = "age",
        caption = txt_caption) +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
@@ -390,7 +403,7 @@ dev.off()
 ## animate
 
 
-```{r}
+```{r eval=FALSE}
 
 p <- data_age_groupdistrib_single %>% 
   filter(geo == "British Columbia" & sex == "Both sexes") %>% 
@@ -610,7 +623,5 @@ Questions:
 - what percentage_group of British Columbians are 65 and older?
 - how many school-age_group children are there?
 - when was the peak in school age_group children?
-
--30-
 
 -30-

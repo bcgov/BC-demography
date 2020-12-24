@@ -38,6 +38,7 @@ library(tidyverse)
 library(lubridate)
 
 # utilities
+library(glue)
 library(here)
 library(janitor)
 #
@@ -94,6 +95,10 @@ df_medianage <- df_1710000501 %>%
 # filter the long frame to include only B.C. 
 df_medianage_BC <- filter(df_medianage, geo == "British Columbia")
 
+year_min = min(df_medianage_BC$ref_date)
+year_max = max(df_medianage_BC$ref_date)
+
+
 ```
 
 
@@ -124,14 +129,17 @@ plot_median_age_BC
 
 # fix the formatting
 
+p_title <- 
+
 plot_median_age_BC +
   theme_BCStats +
   theme(panel.grid.minor = element_blank()) +
   scale_colour_manual(values=palette_BCStats) +
-  ggtitle("Median age, British Columbia, 1971-2019") +
-  labs(y = "median age",
+  labs(title = glue('Median age, British Columbia, {year_min}–{year_max}'),
+       caption = "Source: Statistics Canada. Table 17-10-0005-01",
+       y = "median age",
        x = NULL) +
-  scale_x_continuous(breaks = seq(1971, 2019, by = 5)) +
+  scale_x_continuous(breaks = seq(year_min, year_max, by = 5)) +
   scale_y_continuous(limits = c(20, 50), breaks = seq(20, 50, by = 5))
 
 
@@ -159,10 +167,12 @@ plot_median_age_BC_Can
 # fix the formatting
 plot_median_age_BC_Can +
   theme_BCStats +
-  theme(panel.grid.minor = element_blank()) +
+  theme(panel.grid.minor = element_blank(),
+        legend.title = element_blank()) +
   scale_colour_manual(values=palette_BCStats) +
-  ggtitle("Median age, British Columbia and Canada, 1971-2019") +
-  labs(y = "median age",
+  labs(title = glue('Median age, British Columbia & Canada, {year_min}–{year_max}'),
+       caption = "Source: Statistics Canada. Table 17-10-0005-01",
+       y = "median age",
        x = NULL) +
   scale_x_continuous(breaks = seq(1971, 2016, by = 5)) +
   scale_y_continuous(limits = c(20, 50), breaks = seq(20, 50, by = 5))
@@ -197,10 +207,12 @@ plot_median_age_BC_prov <-
 # fix the formatting
 plot_median_age_BC_prov +
   theme_BCStats +
-  theme(panel.grid.minor = element_blank()) +
+  theme(panel.grid.minor = element_blank(),
+        legend.title = element_blank()) +
   scale_colour_manual(values=palette_BCStats) +
-  ggtitle("Median age, British Columbia and Newfoundland & Labrador, 1971-2019") +
-  labs(y = "median age",
+  labs(title = glue('Median age, British Columbia and Newfoundland & Labrador, {year_min}–{year_max}'),
+       caption = "Source: Statistics Canada. Table 17-10-0005-01",
+       y = "median age",
        x = NULL) +
   scale_x_continuous(breaks = seq(1971, 2016, by = 5)) +
   scale_y_continuous(limits = c(20, 50), breaks = seq(20, 50, by = 5))
