@@ -1,0 +1,124 @@
+---
+title: "BC_demography_01_medianage"
+author: "Martin Monkman"
+date: "2020-01-14"
+output: html_document
+---
+<!--
+Copyright 2020 Province of British Columbia
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and limitations under the License.
+-->
+
+
+With most of the various data files needed for these now available on CANSIM, the script below downloads those using the {cansim} package and then saves them as RDS files for later use.
+
+
+```{r, setup, echo=FALSE, message=FALSE}
+
+# load the tidyverse packages
+library(tidyverse)
+library(lubridate)
+
+# utilities
+library(glue)
+library(here)
+library(janitor)
+#
+library(cansim)
+
+
+```
+
+
+
+### Population estimates
+
+[Population estimates on July 1st, by age and sex](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710000501)
+Frequency: Annual
+
+Table: 17-10-0005-01 (formerly CANSIM 051-0001)
+
+Geography: Canada, Province or territory
+
+
+
+**Note:** the Northwest Territories splits in 1991, into Northwest Territories and Nunavut.
+
+
+
+```{r read_data}
+
+# read the data
+df_1710000501 <- get_cansim("17-10-0005-01")
+
+df_1710000501 <- clean_names(df_1710000501)
+
+df_1710000501 <- df_1710000501 %>% 
+  mutate(ref_date_year = as.integer(ref_date))
+
+write_rds(df_1710000501, "../data_source/df_1710000501.rds")
+
+```
+
+### Population projections
+
+Population Projections for Canada (2018 to 2068), Provinces and Territories (2018 to 2043)
+
+https://www150.statcan.gc.ca/n1/pub/91-520-x/91-520-x2019001-eng.htm
+
+Data: 
+
+Projected population, by projection scenario, age and sex, as of July 1 (x 1,000)1
+Frequency: Annual
+
+Table: 17-10-0057-01 (formerly CANSIM 052-0005)
+
+Geography: Canada, Province or territory
+
+
+
+#### read the data
+
+
+```{r read_data_projection, echo=FALSE, message_group=FALSE}
+
+#data_BC_projection <- read_csv("./data_source/Project_Inputs_TBS_Proj1607_5_single-all.csv")
+
+
+# read the data
+df_1710005701 <- get_cansim("17-10-0057-01")
+
+df_1710005701 <- clean_names(df_1710005701)
+
+
+write_rds(df_1710005701, "../data_source/df_1710005701.rds")
+
+
+```
+
+Create BC-only table with the "M3" projection scenario:
+
+```{r}
+
+
+data_BC_projection <- df_1710005701 %>% 
+  filter(geo == "British Columbia" &
+           projection_scenario == "Projection scenario M3: medium-growth")
+
+
+write_rds(data_BC_projection, "../data_source/data_BC_projection.rds")
+
+
+```
+
+
+-30-

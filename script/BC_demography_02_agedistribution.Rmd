@@ -37,7 +37,6 @@ library(gganimate)
 library(zoo)
 library(scales)
 #
-library(cansim)
 
 # PLOTTING ESSENTIALS
 
@@ -103,11 +102,7 @@ Read and clean data
 ```{r read_data, echo=FALSE, message_group=FALSE}
 
 # read the data
-df_1710000501 <- get_cansim("17-10-0005-01")
-
-df_1710000501 <- clean_names(df_1710000501)
-
-
+df_1710000501 <- read_rds("../data_source/df_1710000501.rds")
 
 
 ```
@@ -384,11 +379,16 @@ plot_smooth_years <- plot_smooth_years +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
   scale_y_continuous(limits = c(0, 90000), breaks = seq(0, 90000, by = 10000),
                      labels = comma) +
-  theme(
-    legend.position = c(1, 1),
-    legend.justification = c("right", "top"),
-    legend.title = element_blank()
-  )
+#  theme(
+#    legend.position = c(1, 1),
+#    legend.justification = c("right", "top"),
+#    legend.title = element_blank()
+#  ) +
+  theme(legend.position = "none") +
+  annotate("text", x=25, y=30000, label = year_min, colour =  "#234275", fontface = 2) +
+  annotate("text", x=64, y=60000, label = year_max, colour =  "#234275", fontface = 2)
+  
+  
 
 plot_smooth_years
 
@@ -454,17 +454,19 @@ plot_smooth_pct <-
 plot_smooth_pct <- plot_smooth_pct +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
-  labs(title = "British Columbia: age_group distribution (percent)",
+  labs(title = "British Columbia: age distribution (percent)",
        subtitle = glue('{year_min} & {year_max}'),
-       y = "percent of population", x = "age_group",
+       y = "percent of population", x = "age",
        caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
   scale_y_continuous(limits = c(0, 2.25), breaks = seq(0, 2.0, by = 0.5)) +
-  theme(
-    legend.position = c(1, 1),
-    legend.justification = c("right", "top"),
-    legend.title = element_blank()
-  )
+#  theme(
+#    legend.position = c(1, 1),
+#    legend.justification = c("right", "top"),
+#    legend.title = element_blank()
+#  ) +
+  theme(legend.position = "none")
+  
   
   
 plot_smooth_pct
@@ -493,6 +495,16 @@ Table: 17-10-0057-01 (formerly CANSIM 052-0005)
 
 Geography: Canada, Province or territory
 
+https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710005701
+
+
+
+**NOTE**
+
+This plot uses the "M3" projection:
+
+> The medium-growth (M3) scenario contains the following assumptions at the Canada level: the total fertility rate reaches 1.59 children per woman in 2042/2043 and remains constant thereafter; life expectancy at birth reaches 87.0 years for males and 89.0 years for females in 2067/2068; interprovincial migration is based on the trends observed between 2003/2004 and 2008/2009; the immigration rate reaches 0.83% in 2042/2043 and remains constant thereafter; the annual number of non-permanent residents reaches 1,397,060 in 2043 and remains constant thereafter; the net emigration rate reaches 0.15% in 2042/2043 and remains constant thereafter.
+
 
 
 #### read the data
@@ -500,17 +512,9 @@ Geography: Canada, Province or territory
 
 ```{r read_data_projection, echo=FALSE, message_group=FALSE}
 
-#data_BC_projection <- read_csv("./data_source/Project_Inputs_TBS_Proj1607_5_single-all.csv")
-
-
 # read the data
-df_1710005701 <- get_cansim("17-10-0057-01")
+data_BC_projection <- read_rds("../data_source/data_BC_projection.rds")
 
-df_1710005701 <- clean_names(df_1710005701)
-
-data_BC_projection <- df_1710005701 %>% 
-  filter(geo == "British Columbia" &
-           projection_scenario == "Projection scenario M3: medium-growth")
 
 ```
 
@@ -550,9 +554,11 @@ plot_smooth_years +
   geom_smooth(data = df_single_proj_max, 
               aes(x = age_group.num, y = (value * 1000)),
               span = 0.3, se = FALSE) +
-  annotate("text", x=86, y=1.0, label = year_max_proj, colour =  "#234275", fontface = 2) +
+  annotate("text", x=90, y=50000, label = year_max_proj, colour =  "#234275", fontface = 2) +
   labs(subtitle = glue('{year_min}, {year_max} & {year_max_proj} (M3 projection)'),
-       caption = txt_caption2)  
+       caption = txt_caption2)  +
+  theme(legend.position = "none")
+  
   
 
 plot_smooth_pct +
@@ -561,153 +567,12 @@ plot_smooth_pct +
               span = 0.3, se = FALSE) +
   annotate("text", x=86, y=1.0, label = year_max_proj, colour =  "#234275", fontface = 2) +
   labs(subtitle = glue('{year_min}, {year_max} & {year_max_proj} (M3 projection)'),
-       caption = txt_caption2)  
+       caption = txt_caption2) +
+  theme(legend.position = "none")
   
 
 ```
 
-
-##RESTART HERE
-
-
-```{r}
-
-
-
-ls.str(data_BC_projection)
-
-unique(data_BC_projection$age_group)
-unique(data_BC_projection$sex)
-unique(data_BC_projection$projection_scenario )
-
-data_BC_projection %>%
-  group_by(sex) %>%
-  count()
-
-# delete rows where sex==NA
-
-data_BC_projection <- data_BC_projection %>%
-  na.omit()
-
-data_BC_projection %>%
-  group_by(sex) %>%
-  count()
-
-unique(data_BC_projection$age_group)
-unique(data_BC_projection$sex)
-unique(data_BC_projection$Year)
-
-
-# clean up age_group category labels
-data_BC_projection$age_group.num <- as.integer(data_BC_projection$age_group) 
-data_BC_projection$age_group.num[data_BC_projection$age_group == "100+"] <- 100 
-
-data_BC_projection %>%
-  group_by(sex) %>%
-  count()
-
-unique(data_BC_projection$age_group.num)
-
-ls.str(data_BC_projection)
-
-data_age_groupdistrib_BC_2041 <- data_BC_projection %>%
-#  select(geo, ref_date, sex, age_group,  value) %>%
-  filter(Year == "2041") %>%
-  group_by(age_group.num) %>%
-  summarise(value = sum(Population))
-
-ls.str(data_age_groupdistrib_BC_2041)
-
-
-# calculate percentage_group of total population for each age_group group
-data_age_groupdistrib_BC_2041 <- data_age_groupdistrib_BC_2041 %>%
-  mutate(year_pct = (value / sum(value) * 100)) 
-
-ls.str(data_age_groupdistrib_BC_2041)
-
-```
-
-
-#### Plot
-
-
-```{r}
-
-plot_age_groupdist_BC_2041 <- ggplot(data_age_groupdistrib_BC_2041, aes(x=age_group.num, y=value)) +
-  geom_bar(stat="identity", fill="#234275")
-
-plot_age_groupdist_BC_2041
-  
-
-ggplot(data_age_groupdistrib_BC_2041, aes(x=age_group.num, y=value)) +
-  geom_bar(stat="identity", fill="#234275") +
-  geom_smooth(span = 0.25, se = FALSE)
-  
-  
-
-
-# combined plot: absolute
-plot_smooth_years2 <- ggplot(data_age_groupdistrib_BC_2019, aes(x=age_group.num, y=value)) +
-  geom_smooth(span = 0.25, se = FALSE, colour = "#234275") +
-  geom_smooth(data = data_age_groupdistrib_BC_1971, span = 0.25, se = FALSE, colour = "#E3A82B") +
-  geom_smooth(data = data_age_groupdistrib_BC_2041, span = 0.25, se = FALSE, colour = "#26BDEF") +
-  annotate("text", x=19, y=35000, label = "1971", colour =  "#234275", fontface = 2) +
-  annotate("text", x=68, y=35000, label = "2016", colour =  "#234275", fontface = 2) +
-  annotate("text", x=93, y=35000, label = "2041", colour =  "#234275", fontface = 2)
-
-plot_smooth_years2
-
-plot_smooth_years2 <- plot_smooth_years2 +
-  theme_BCStats +
-  scale_colour_manual(values=palette_BCStats) +
-  labs(title = "British Columbia: age_group distribution (total)",
-       subtitle = "1971, 2016 & 2041",
-       y = "population", x = "age_group",
-       caption ="Source: Statistics Canada, CANSIM Table 051-0001; BC Stats") +
-  scale_x_continuous(breaks = seq(0, 100, 10)) +
-  scale_y_continuous(limits = c(0, 90000), breaks = seq(0, 90000, by = 10000),
-                     labels = comma)
-
-plot_smooth_years2
-
-## save the plot as a png file
-#png("plot_smooth_years2.png", width=1024, height=768, res=120)
-#plot(plot_smooth_years2)
-#dev.off()
-  
-
-
-
-# combined plot: percentage_group distribution
-
-plot_smooth_pct2 <- ggplot(data_age_groupdistrib_BC_2019, aes(x=age_group.num, y=year_pct)) +
-  geom_smooth(span = 0.3, se = FALSE, colour = "#234275") +
-  geom_smooth(data = data_age_groupdistrib_BC_1971, span = 0.3, se = FALSE, colour = "#E3A82B") +
-  geom_smooth(data = data_age_groupdistrib_BC_2041, span = 0.3, se = FALSE, colour = "#26BDEF") +
-  annotate("text", x=20, y=2.0, label = "1971", colour =  "#234275", fontface = 2) +
-  annotate("text", x=68, y=1.5, label = "2016", colour =  "#234275", fontface = 2) +
-  annotate("text", x=85, y=1.0, label = "2041", colour =  "#234275", fontface = 2)
-  
-
-plot_smooth_pct2 <- plot_smooth_pct2 +
-  theme_BCStats +
-  scale_colour_manual(values=palette_BCStats) +
-  labs(title = "British Columbia: age_group distribution (percent)",
-       subtitle = "1971, 2016 & 2041",
-       y = "percent of population", x = "age_group",
-       caption ="Source: Statistics Canada, CANSIM Table 051-0001; BC Stats") +
-  scale_x_continuous(breaks = seq(0, 100, 10)) +
-  scale_y_continuous(limits = c(0, 2.25), breaks = seq(0, 2.0, by = 0.5)) 
-  
-plot_smooth_pct2
-
-## save the plot as a png file
-#png("plot_smooth_pct2.png", width=1024, height=768, res=120)
-#plot(plot_smooth_pct2)
-#dev.off()
-  
-
-```
 
 
 ## Summary statistics

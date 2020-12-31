@@ -42,7 +42,6 @@ library(glue)
 library(here)
 library(janitor)
 #
-library(cansim)
 
 # ----
 # create a chart theme & colour palette for use in ggplot2
@@ -72,21 +71,13 @@ palette_BCStats <- c("#234275", "#E3A82B", "#26BDEF", "#11CC33", "#D3E2ED", "8A8
 
 
 
-The CANSIM extract is cleaned up to produce a wide table that contains only the year (as the first variable) and the name of the region (Canada, province, or territory). 
-
-Note that the Northwest Territories splits in 1991, into Northwest Territories and Nunavut.
-
 
 
 ```{r read_data}
 
 # read the data
-df_1710000501 <- get_cansim("17-10-0005-01")
+df_1710000501 <- read_rds("../data_source/df_1710000501.rds")
 
-df_1710000501 <- clean_names(df_1710000501)
-
-df_1710000501 <- df_1710000501 %>% 
-  mutate(ref_date_year = as.integer(ref_date))
 
 df_medianage <- df_1710000501 %>% 
   filter(sex == "Both sexes",
