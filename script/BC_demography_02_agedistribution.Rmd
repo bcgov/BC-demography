@@ -19,37 +19,13 @@ See the License for the specific language governing permissions and limitations 
 -->
 
 
-## Plot the age distribution of British Columbia & Canada, 1971–present
-
-### data
-
-
-Source:
-Statistics Canada, CANSIM 
-[Population estimates on July 1st, by age and sex](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710000501)
-
-Table: 17-10-0005-01 (formerly CANSIM 051-0001)
-
-The source file contains population for Canada, the provinces and territories, by age (and age group), and by sex, for the years 1976-2020 (as of this writing).
-
-Source file:  (https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710000501)
-
-
-The CANSIM extract requires some carpentry to be useful for the purposes of this plotting. The tidied version becomes a data frame `data_age_groupdistrib_BC_2019`.
-
-**Notes:** 
-
-1. The table originally tabulated the last category as "90 years and over"; starting with 2001 this category was expanded to single years 90 through 99, and a "100 years and over" category was added. Depending on the year(s) of interest, the treatment of the extreme category will vary. 
-
-2. The extreme age_group categories appear for all years, but are empty values. These lead to "parsing failures" when reading the source .csv file.
-
-
 ```{r setup, echo=FALSE, message_group=FALSE}
 
 # tidyverse
 library(tidyverse)
 
 # utilities
+library(glue)
 library(here)
 library(janitor)
 #
@@ -92,9 +68,35 @@ palette_BCStats_fill <- c("#3F3F3F", "#ABABAB", "#DFDFDF", "#969696", "#838383",
 
 #
 txt_caption <- "Source: Statistics Canada, CANSIM Table 17-10-0005-01"
+txt_caption2 <- "Source: Statistics Canada, CANSIM Tables 17-10-0005-01 & 17-10-0057-01"
 
 
 ```
+
+## Plot the age distribution of British Columbia & Canada, 1971–present
+
+### data
+
+
+Source:
+Statistics Canada, CANSIM 
+[Population estimates on July 1st, by age and sex](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710000501)
+
+Table: 17-10-0005-01 (formerly CANSIM 051-0001)
+
+The source file contains population for Canada, the provinces and territories, by age (and age group), and by sex, for the years 1976-2020 (as of this writing).
+
+Source file:  (https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710000501)
+
+
+The CANSIM extract requires some carpentry to be useful for the purposes of this plotting. The tidied version becomes a data frame `data_age_groupdistrib_BC_2019`.
+
+**Notes:** 
+
+1. The table originally tabulated the last category as "90 years and over"; starting with 2001 this category was expanded to single years 90 through 99, and a "100 years and over" category was added. Depending on the year(s) of interest, the treatment of the extreme category will vary. 
+
+2. The extreme age_group categories appear for all years, but are empty values. These lead to "parsing failures" when reading the source .csv file.
+
 
 Read and clean data
 
@@ -262,10 +264,10 @@ plot_age_groupdist_BC_max <- plot_age_groupdist_BC_max +
 
 plot_age_groupdist_BC_max
 
-# save the plot as a png file
-plot_file_name <- glue('plot_age_groupdist_BC_{year_max}.png')
-ggsave(plot_file_name, width=9, height=6)
-
+## save the plot as a png file
+#plot_file_name <- glue('plot_age_groupdist_BC_{year_max}.png')
+#ggsave(plot_file_name, width=9, height=6)
+#
 
 ```
 
@@ -296,9 +298,9 @@ plot_age_groupdist_BC_max_pct <- plot_age_groupdist_BC_max_pct +
 plot_age_groupdist_BC_max_pct
 
 
-# save the plot as a png file
-plot_file_name <- glue('plot_age_groupdist_BC_{year_max}_pct.png')
-ggsave(plot_file_name, width=9, height=6)
+## save the plot as a png file
+#plot_file_name <- glue('plot_age_groupdist_BC_{year_max}_pct.png')
+#ggsave(plot_file_name, width=9, height=6)
 
 ```
 
@@ -337,8 +339,8 @@ plot_age_groupdist_BC_max_shade
 
 # save the plot as a png file
 # save the plot as a png file
-plot_file_name <- glue('plot_age_groupdist_BC_{year_max}_shade.png')
-ggsave(plot_file_name, width=9, height=6)
+#plot_file_name <- glue('plot_age_groupdist_BC_{year_max}_shade.png')
+#ggsave(plot_file_name, width=9, height=6)
 
 
 
@@ -390,10 +392,10 @@ plot_smooth_years <- plot_smooth_years +
 
 plot_smooth_years
 
-# save the plot as a png file
-png("plot_smooth_years.png", width=1024, height=768, res=120)
-plot(plot_smooth_years)
-dev.off()
+## save the plot as a png file
+#png("plot_smooth_years.png", width=1024, height=768, res=120)
+#plot(plot_smooth_years)
+#dev.off()
   
 
 
@@ -427,46 +429,50 @@ p <- data_age_groupdistrib_single %>%
   labs(subtitle = "Year: {frame_time}")
 
 
-p
-
-animate(p, duration = 30)
-
-anim_save("BC_pop_dist_anim.gif")
+#p
+#
+#animate(p, duration = 30)
+#
+#anim_save("BC_pop_dist_anim.gif")
 
 ```
 
 
-## _RESUME HERE_
-
-
-
 ```{r}
-
-
 # combined plot: percentage_group
-plot_smooth_pct <- ggplot(data_age_groupdistrib_BC_2019, aes(x=age_group.num, y=year_pct)) +
-  geom_smooth(span = 0.3, se = FALSE, colour = "#234275") +
-  geom_smooth(data = data_age_groupdistrib_BC_1971, span = 0.3, se = FALSE, colour = "#E3A82B") +
-  annotate("text", x=20, y=2.0, label = "1971", colour =  "#234275", fontface = 2) +
-  annotate("text", x=66, y=1.5, label = "2016", colour =  "#234275", fontface = 2)
+
+plot_smooth_pct <- 
+  data_age_groupdistrib_single %>% 
+  filter(geo == "British Columbia" & sex == "Both sexes") %>% 
+  filter(ref_date_year == year_min | ref_date_year == year_max) %>% 
+  ggplot(aes(x=age_group.num, y=year_pct, colour = ref_date)) +
+  geom_smooth(span = 0.3, se = FALSE) + 
+  annotate("text", x=20, y=2.0, label = year_min, colour =  "#234275", fontface = 2) +
+  annotate("text", x=66, y=1.5, label = year_max, colour =  "#234275", fontface = 2)
   
 
 plot_smooth_pct <- plot_smooth_pct +
   theme_BCStats +
   scale_colour_manual(values=palette_BCStats) +
   labs(title = "British Columbia: age_group distribution (percent)",
-       subtitle = "1971 & 2016",
+       subtitle = glue('{year_min} & {year_max}'),
        y = "percent of population", x = "age_group",
        caption ="Source: Statistics Canada, CANSIM Table 051-0001") +
   scale_x_continuous(breaks = seq(0, 100, 10)) +
-  scale_y_continuous(limits = c(0, 2.25), breaks = seq(0, 2.0, by = 0.5)) 
+  scale_y_continuous(limits = c(0, 2.25), breaks = seq(0, 2.0, by = 0.5)) +
+  theme(
+    legend.position = c(1, 1),
+    legend.justification = c("right", "top"),
+    legend.title = element_blank()
+  )
+  
   
 plot_smooth_pct
 
-# save the plot as a png file
-png("plot_smooth_pct.png", width=1024, height=768, res=120)
-plot(plot_smooth_pct)
-dev.off()
+## save the plot as a png file
+#png("plot_smooth_pct.png", width=1024, height=768, res=120)
+#plot(plot_smooth_pct)
+#dev.off()
   
 
 ```
@@ -474,17 +480,105 @@ dev.off()
 
 ## Add 2041 projection to smoothed curve plots
 
+Population Projections for Canada (2018 to 2068), Provinces and Territories (2018 to 2043)
+
+https://www150.statcan.gc.ca/n1/pub/91-520-x/91-520-x2019001-eng.htm
+
+Data: 
+
+Projected population, by projection scenario, age and sex, as of July 1 (x 1,000)1
+Frequency: Annual
+
+Table: 17-10-0057-01 (formerly CANSIM 052-0005)
+
+Geography: Canada, Province or territory
+
+
+
 #### read the data
+
+
+```{r read_data_projection, echo=FALSE, message_group=FALSE}
+
+#data_BC_projection <- read_csv("./data_source/Project_Inputs_TBS_Proj1607_5_single-all.csv")
+
+
+# read the data
+df_1710005701 <- get_cansim("17-10-0057-01")
+
+df_1710005701 <- clean_names(df_1710005701)
+
+data_BC_projection <- df_1710005701 %>% 
+  filter(geo == "British Columbia" &
+           projection_scenario == "Projection scenario M3: medium-growth")
+
+```
+
+
+```{r}
+df_single_proj <- data_BC_projection %>% 
+  filter(!age_group %in% drop.age_group.vals_1 &
+           sex == "Both sexes" &
+           ref_date > year_max) %>% 
+  # drop rows for the years that StatCan only projects Canadian population
+  drop_na(value)
+  
+
+# create new variable with just the number component of the age group string
+df_single_proj <- df_single_proj %>% 
+  mutate(age_group.num = 
+           case_when(
+             age_group == "Under 1 year" ~ 0,
+             TRUE ~ parse_number(age_group))
+  )
+
+year_max_proj <- max(df_single_proj$ref_date)
+
+df_single_proj_max <- df_single_proj %>% 
+  group_by(ref_date) %>% 
+  mutate(age_grp_pct = value / sum(value) * 100) %>% 
+  filter(ref_date == year_max_proj)
+
+df_single_proj_max
+
+```
+
 
 ```{r}
 
-data_BC_projection <- read_csv("./data_source/Project_Inputs_TBS_Proj1607_5_single-all.csv")
+plot_smooth_years + 
+  geom_smooth(data = df_single_proj_max, 
+              aes(x = age_group.num, y = (value * 1000)),
+              span = 0.3, se = FALSE) +
+  annotate("text", x=86, y=1.0, label = year_max_proj, colour =  "#234275", fontface = 2) +
+  labs(subtitle = glue('{year_min}, {year_max} & {year_max_proj} (M3 projection)'),
+       caption = txt_caption2)  
+  
+
+plot_smooth_pct +
+  geom_smooth(data = df_single_proj_max, 
+              aes(x = age_group.num, y = age_grp_pct),
+              span = 0.3, se = FALSE) +
+  annotate("text", x=86, y=1.0, label = year_max_proj, colour =  "#234275", fontface = 2) +
+  labs(subtitle = glue('{year_min}, {year_max} & {year_max_proj} (M3 projection)'),
+       caption = txt_caption2)  
+  
+
+```
+
+
+##RESTART HERE
+
+
+```{r}
+
+
 
 ls.str(data_BC_projection)
 
 unique(data_BC_projection$age_group)
 unique(data_BC_projection$sex)
-unique(data_BC_projection$Year)
+unique(data_BC_projection$projection_scenario )
 
 data_BC_projection %>%
   group_by(sex) %>%
@@ -576,10 +670,10 @@ plot_smooth_years2 <- plot_smooth_years2 +
 
 plot_smooth_years2
 
-# save the plot as a png file
-png("plot_smooth_years2.png", width=1024, height=768, res=120)
-plot(plot_smooth_years2)
-dev.off()
+## save the plot as a png file
+#png("plot_smooth_years2.png", width=1024, height=768, res=120)
+#plot(plot_smooth_years2)
+#dev.off()
   
 
 
@@ -607,10 +701,10 @@ plot_smooth_pct2 <- plot_smooth_pct2 +
   
 plot_smooth_pct2
 
-# save the plot as a png file
-png("plot_smooth_pct2.png", width=1024, height=768, res=120)
-plot(plot_smooth_pct2)
-dev.off()
+## save the plot as a png file
+#png("plot_smooth_pct2.png", width=1024, height=768, res=120)
+#plot(plot_smooth_pct2)
+#dev.off()
   
 
 ```
