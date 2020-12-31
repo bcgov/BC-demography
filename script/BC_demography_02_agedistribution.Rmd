@@ -260,8 +260,8 @@ plot_age_groupdist_BC_max <- plot_age_groupdist_BC_max +
 plot_age_groupdist_BC_max
 
 ## save the plot as a png file
-#plot_file_name <- glue('plot_age_groupdist_BC_{year_max}.png')
-#ggsave(plot_file_name, width=9, height=6)
+plot_file_name <- glue('plot_age_groupdist_BC_{year_max}.png')
+ggsave(plot_file_name, width=9, height=6)
 #
 
 ```
@@ -294,8 +294,8 @@ plot_age_groupdist_BC_max_pct
 
 
 ## save the plot as a png file
-#plot_file_name <- glue('plot_age_groupdist_BC_{year_max}_pct.png')
-#ggsave(plot_file_name, width=9, height=6)
+plot_file_name <- glue('plot_age_groupdist_BC_{year_max}_pct.png')
+ggsave(plot_file_name, width=9, height=6)
 
 ```
 
@@ -334,8 +334,8 @@ plot_age_groupdist_BC_max_shade
 
 # save the plot as a png file
 # save the plot as a png file
-#plot_file_name <- glue('plot_age_groupdist_BC_{year_max}_shade.png')
-#ggsave(plot_file_name, width=9, height=6)
+plot_file_name <- glue('plot_age_groupdist_BC_{year_max}_shade.png')
+ggsave(plot_file_name, width=9, height=6)
 
 
 
@@ -392,10 +392,9 @@ plot_smooth_years <- plot_smooth_years +
 
 plot_smooth_years
 
-## save the plot as a png file
-#png("plot_smooth_years.png", width=1024, height=768, res=120)
-#plot(plot_smooth_years)
-#dev.off()
+# save the plot as a png file
+ggsave("plot_smooth_years.png", width=9, height=6)
+  
   
 
 
@@ -437,6 +436,8 @@ p <- data_age_groupdistrib_single %>%
 
 ```
 
+
+## Projections
 
 ```{r}
 # combined plot: percentage_group
@@ -480,7 +481,6 @@ plot_smooth_pct
 ```
 
 
-## Add 2041 projection to smoothed curve plots
 
 Population Projections for Canada (2018 to 2068), Provinces and Territories (2018 to 2043)
 
@@ -506,8 +506,6 @@ This plot uses the "M3" projection:
 > The medium-growth (M3) scenario contains the following assumptions at the Canada level: the total fertility rate reaches 1.59 children per woman in 2042/2043 and remains constant thereafter; life expectancy at birth reaches 87.0 years for males and 89.0 years for females in 2067/2068; interprovincial migration is based on the trends observed between 2003/2004 and 2008/2009; the immigration rate reaches 0.83% in 2042/2043 and remains constant thereafter; the annual number of non-permanent residents reaches 1,397,060 in 2043 and remains constant thereafter; the net emigration rate reaches 0.15% in 2042/2043 and remains constant thereafter.
 
 
-
-#### read the data
 
 
 ```{r read_data_projection, echo=FALSE, message_group=FALSE}
@@ -550,6 +548,7 @@ df_single_proj_max
 
 ```{r}
 
+plot_smooth_years_proj <-
 plot_smooth_years + 
   geom_smooth(data = df_single_proj_max, 
               aes(x = age_group.num, y = (value * 1000)),
@@ -558,9 +557,13 @@ plot_smooth_years +
   labs(subtitle = glue('{year_min}, {year_max} & {year_max_proj} (M3 projection)'),
        caption = txt_caption2)  +
   theme(legend.position = "none")
-  
-  
+plot_smooth_years_proj
 
+# save the plot as a png file
+ggsave("plot_smooth_years_proj.png", width=9, height=6)
+  
+  
+plot_smooth_pct_proj <-
 plot_smooth_pct +
   geom_smooth(data = df_single_proj_max, 
               aes(x = age_group.num, y = age_grp_pct),
@@ -569,9 +572,16 @@ plot_smooth_pct +
   labs(subtitle = glue('{year_min}, {year_max} & {year_max_proj} (M3 projection)'),
        caption = txt_caption2) +
   theme(legend.position = "none")
+
+plot_smooth_pct_proj
+
+# save the plot as a png file
+ggsave("plot_smooth_pct_proj.png", width=9, height=6)
+
   
 
 ```
+
 
 
 

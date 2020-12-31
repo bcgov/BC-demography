@@ -1,0 +1,113 @@
+---
+title: "demography - aggregate into 5 year groups"
+author: "Martin Monkman"
+date: "2020-12-31"
+output: html_document
+---
+<!--
+Copyright 2020 Province of British Columbia
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and limitations under the License.
+-->
+
+
+Function to aggregate demographic series into 5 year age bins
+
+```{r, setup, echo=FALSE, message=FALSE}
+
+# load the tidyverse packages
+library(tidyverse)
+
+# utilities
+library(glue)
+library(here)
+library(janitor)
+#
+library(cansim)
+
+
+```
+
+
+```{r read_data}
+
+# read the data
+df_indigenous_pop <- read_csv(here("data_source", "2011-2044 BC Indigenous Population Estimates and Projections 2019-05-06.csv"))
+
+df_indigenous_pop <- clean_names(df_indigenous_pop)
+
+```
+
+### aggregation
+
+
+
+```{r}
+
+age_seq <- tibble(
+  age = seq(0, 17, 1))
+
+age_seq %<>% 
+  # use modulus division to get the subsets of 5
+  mutate(age_grp = age %/% 5) %>% 
+  mutate(age_5yr_grp =
+           case_when(
+             age_grp == 0 ~ "Less than 5",
+             TRUE ~ as.character(glue('{age_grp * 5} to {age_grp * 5 + 4}')) 
+           )) %>% 
+  select(-age_grp)
+
+
+```
+
+
+```{r}
+
+df_indigenous_pop <-
+df_indigenous_pop %>% 
+  # use modulus division to get the subsets of 5
+  mutate(age_grp = age %/% 5) %>% 
+  mutate(age_5yr_grp =
+           case_when(
+             age_grp == 0 ~ "Less than 5",
+             age_grp == 18 ~ "90 and over",
+             TRUE ~ as.character(glue('{age_grp * 5} to {age_grp * 5 + 4}')) 
+           )) 
+
+df_indigenous_pop  
+
+```
+
+```{r}
+
+df_indigenous_pop %>% 
+  group_by(year, sex, age_grp, age_5yr_grp) %>% 
+  summarise(population = sum(n))
+
+```
+
+
+```{r}
+
+data_indigenous_pop_5yrgrp <-
+df_indigenous_pop %>% 
+  filter(year == 2020) %>% 
+  group_by(year, sex, hsda, identity, age_grp, age_5yr_grp) %>% 
+  summarise(population = sum(n))
+
+data_indigenous_pop_5yrgrp
+
+write_csv(data_indigenous_pop_5yrgrp, "../data_output/data_indigenous_pop_5yrgrp.csv")
+
+```
+
+
+-30-
