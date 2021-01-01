@@ -174,7 +174,8 @@ df_single_2001 <- df_single %>%
   
 data_age_groupdistrib_single <- rbind(df_single_1971, df_single_2001)  
 
-
+#write_rds(data_age_groupdistrib_single, "../data_output/data_age_groupdistrib_single.rds")
+#data_age_groupdistrib_single <- read_rds("../data_output/data_age_groupdistrib_single.rds")
 ```
 
 
@@ -196,6 +197,10 @@ data_age_groupdistrib_single %>%
   summarise(total_pop = sum(value),
             total_pct = sum(year_pct))
 
+#write_rds(data_age_groupdistrib_single, "../data_output/data_age_groupdistrib_single.rds")
+#data_age_groupdistrib_single <- read_rds("../data_output/data_age_groupdistrib_single.rds")
+
+
 ```
 
 
@@ -213,6 +218,10 @@ data_age_groupdistrib_BC_max <- data_age_groupdistrib_single %>%
   filter(geo == "British Columbia") %>%
   filter(ref_date == year_max) %>%
   filter(sex == "Both sexes")
+
+#write_rds(data_age_groupdistrib_BC_max, "../data_source/data_age_groupdistrib_BC_max.rds")
+#data_age_groupdistrib_BC_max <- read_rds("../data_source/data_age_groupdistrib_BC_max.rds")
+
 
 ```
 
@@ -437,8 +446,6 @@ p <- data_age_groupdistrib_single %>%
 ```
 
 
-## Projections
-
 ```{r}
 # combined plot: percentage_group
 
@@ -480,6 +487,7 @@ plot_smooth_pct
 
 ```
 
+## Projections
 
 
 Population Projections for Canada (2018 to 2068), Provinces and Territories (2018 to 2043)
@@ -511,7 +519,7 @@ This plot uses the "M3" projection:
 ```{r read_data_projection, echo=FALSE, message_group=FALSE}
 
 # read the data
-data_BC_projection <- read_rds("../data_source/data_BC_projection.rds")
+data_BC_projection <- read_rds("../data_output/data_BC_projection.rds")
 
 
 ```
@@ -523,7 +531,8 @@ df_single_proj <- data_BC_projection %>%
            sex == "Both sexes" &
            ref_date > year_max) %>% 
   # drop rows for the years that StatCan only projects Canadian population
-  drop_na(value)
+  drop_na(value) %>% 
+  mutate(value_th = value * 1000)
   
 
 # create new variable with just the number component of the age group string
@@ -533,6 +542,12 @@ df_single_proj <- df_single_proj %>%
              age_group == "Under 1 year" ~ 0,
              TRUE ~ parse_number(age_group))
   )
+
+```
+
+
+
+```{r}
 
 year_max_proj <- max(df_single_proj$ref_date)
 
@@ -551,7 +566,7 @@ df_single_proj_max
 plot_smooth_years_proj <-
 plot_smooth_years + 
   geom_smooth(data = df_single_proj_max, 
-              aes(x = age_group.num, y = (value * 1000)),
+              aes(x = age_group.num, y = value_th),
               span = 0.3, se = FALSE) +
   annotate("text", x=90, y=50000, label = year_max_proj, colour =  "#234275", fontface = 2) +
   labs(subtitle = glue('{year_min}, {year_max} & {year_max_proj} (M3 projection)'),
@@ -583,6 +598,96 @@ ggsave("plot_smooth_pct_proj.png", width=9, height=6)
 ```
 
 
+## 65+ and 85+
+
+```{r}
+
+#data_age_groupdistrib_single <- read_rds("../data_output/data_age_groupdistrib_single.rds")
+data_age_groupdistrib_single
+
+df_65plus_BC <- 
+data_age_groupdistrib_single %>% 
+  filter(geo == "British Columbia",
+         sex == "Both sexes",
+         age_group.num >= 65)
+
+df_65plus_BC <- df_65plus_BC %>% 
+  select(ref_date_year, geo, sex, age_group, age_group.num, value)
+
+df_65plus_BC
+
+```
+
+
+```{r}
+df_single_proj
+
+df_single_proj_65 <- df_single_proj %>% 
+  mutate(ref_date_year = as.integer(ref_date)) %>% 
+  filter(age_group.num >= 65) %>% 
+  select(ref_date_year, geo, sex, age_group, age_group.num, value = value_th) 
+
+df_single_proj_65
+
+df_65plus_BC_proj <- rbind(df_65plus_BC, df_single_proj_65)
+
+tail(df_65plus_BC_proj)
+```
+
+
+
+```{r}
+df_65plus_summary <-
+df_65plus_BC_proj %>% 
+  drop_na(value) %>% 
+  group_by(geo, ref_date_year, sex) %>% 
+  summarise(total_pop_65 = sum(value),
+            total_pop_80 = sum(value[age_group.num >= 80]))
+
+df_65plus_summary
+```
+
+#### chart
+
+```{r}
+
+ch_65plus <- 
+ggplot(df_65plus_summary) +
+  geom_line(aes(x = ref_date_year, y = total_pop_65), colour = "#234275", size = 1.5) +
+  geom_line(aes(x = ref_date_year, y = total_pop_80), colour = "#E3A82B", size = 1.5) 
+  
+ch_65plus
+
+```
+
+
+
+```{r}
+ch_65plus +
+  theme_BCStats +
+#  scale_colour_manual(values=palette_BCStats) +
+  labs(title = "British Columbia: population, ages 65+ & 85+",
+       subtitle = glue('{year_min}–{year_max_proj}'),
+       y = "population", x = "",
+       caption = txt_caption2) +
+#  scale_x_continuous(breaks = seq(0, 100, 10)) +
+  scale_y_continuous(limits = c(0, 1750000), breaks = seq(0, 1750000, by = 250000),
+                     labels = comma) +
+#  theme(
+#    legend.position = c(1, 1),
+#    legend.justification = c("right", "top"),
+#    legend.title = element_blank()
+#  ) +
+  theme(legend.position = "none") +
+  annotate("text", x=1990, y=500000, label = "65+", colour =  "#234275", fontface = 2) +
+  annotate("text", x=2030, y=500000, label = "80+", colour =  "#E3A82B", fontface = 2) +
+#  
+  # projection box
+  annotate("rect", xmin=as.numeric(year_max), xmax=as.numeric(year_max_proj), ymin=0, ymax=1750000, alpha=0.1, fill="blue") +
+  annotate("text", x=(as.numeric(year_max) + 5), y=1650000,  label="projection", colour = "blue") 
+  
+
+```
 
 
 ## Summary statistics
