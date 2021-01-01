@@ -94,18 +94,23 @@ df_indigenous_pop %>%
 
 ```
 
+## single year summary table
 
 ```{r}
+# set year
+filter_year <- 2021
 
 data_indigenous_pop_5yrgrp <-
 df_indigenous_pop %>% 
-  filter(year == 2020) %>% 
+  filter(year == filter_year) %>% 
   group_by(year, sex, hsda, identity, age_grp, age_5yr_grp) %>% 
   summarise(population = sum(n))
 
 data_indigenous_pop_5yrgrp
 
-write_csv(data_indigenous_pop_5yrgrp, "../data_output/data_indigenous_pop_5yrgrp.csv")
+# save as csv file
+file_name <- glue("../data_output/data_indigenous_pop_5yrgrp_{filter_year}.csv")
+write_csv(data_indigenous_pop_5yrgrp, file_name)
 
 ```
 
