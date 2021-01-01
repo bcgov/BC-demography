@@ -687,6 +687,10 @@ ch_65plus +
   annotate("text", x=(as.numeric(year_max) + 5), y=1650000,  label="projection", colour = "blue") 
   
 
+# save the plot as a png file
+ggsave("../plot_images/plot_65plus.png", width=9, height=6)
+
+
 ```
 
 
