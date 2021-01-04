@@ -120,8 +120,6 @@ plot_median_age_BC
 
 # fix the formatting
 
-p_title <- 
-
 plot_median_age_BC +
   theme_BCStats +
   theme(panel.grid.minor = element_blank()) +
@@ -131,7 +129,20 @@ plot_median_age_BC +
        y = "median age",
        x = NULL) +
   scale_x_continuous(breaks = seq(year_min, year_max, by = 5)) +
-  scale_y_continuous(limits = c(20, 50), breaks = seq(20, 50, by = 5))
+  scale_y_continuous(limits = c(20, 50), breaks = seq(20, 50, by = 5)) +
+  # annotations
+  annotate("text", x=1971, y=22, label = "27", colour =  "#234275", fontface = 2) +
+  geom_segment(aes(x=1971, xend=1971, y=23.5, yend=26.5), 
+               size = 1.5, colour = "#234275",
+               arrow = arrow(length = unit(.3, "cm"))) +
+  annotate("text", x=2019, y=38, label = "42", colour =  "#E3A82B", fontface = 2) +
+  geom_segment(aes(x=2019, xend=2019, y=38.5, yend=41.5), 
+               size = 1.5, colour = "#E3A82B",
+               arrow = arrow(length = unit(.3, "cm"))) 
+  
+  
+# save the plot as a png file
+ggsave("../plot_images/plot_median_age_BC.png", width=9, height=6)
 
 
 ```
@@ -168,6 +179,9 @@ plot_median_age_BC_Can +
   scale_x_continuous(breaks = seq(1971, 2016, by = 5)) +
   scale_y_continuous(limits = c(20, 50), breaks = seq(20, 50, by = 5))
 
+  
+# save the plot as a png file
+ggsave("../plot_images/plot_median_age_BC_CAN.png", width=9, height=6)
 
 ```
 
@@ -208,6 +222,9 @@ plot_median_age_BC_prov +
   scale_x_continuous(breaks = seq(1971, 2016, by = 5)) +
   scale_y_continuous(limits = c(20, 50), breaks = seq(20, 50, by = 5))
 
+  
+# save the plot as a png file
+ggsave("../plot_images/plot_median_age_BC_NL.png", width=9, height=6)
 
 ```
 
