@@ -316,7 +316,9 @@ ggsave(plot_file_name, width=9, height=6)
 # baby boom (in Canada): 1946 - 1965
 # gen X: 1966 - 1980
 # millenials: 1981 - 1995
+# gen X: 1996 - 2001
 
+# https://www.pewresearch.org/fact-tank/2019/01/17/where-millennials-end-and-generation-z-begins/
 
 boomer_max <- as.integer(year_max) - 1946
 boomer_min <- as.integer(year_max) - 1965
@@ -324,19 +326,24 @@ genx_max <- as.integer(year_max) - 1965
 genx_min <- as.integer(year_max) - 1980
 millen_max <- as.integer(year_max) - 1980
 millen_min <- as.integer(year_max) - 1995
+genz_max <- as.integer(year_max) - 1995
+genz_min <- as.integer(year_max) - 2010
 
 
 plot_age_groupdist_BC_max_shade <- plot_age_groupdist_BC_max +
   # add shaded rectangle for the projection range
   # boomer
   annotate("rect", xmin=boomer_min, xmax=boomer_max, ymin=0, ymax=89750, alpha=0.1, fill="green") +
-  annotate("text", x=(boomer_min + 6), y=85000,  label="Boomers") +
+  annotate("text", x=(boomer_min + 7), y=85000,  label="Boomers") +
   # gen X
   annotate("rect", xmin=genx_min, xmax=genx_max, ymin=0, ymax=89750, alpha=0.1, fill="blue") +
   annotate("text", x=(genx_min + 5), y=85000,  label="GenX") +
   # avocado toast
   annotate("rect", xmin=millen_min, xmax=millen_max, ymin=0, ymax=89750, alpha=0.1, fill="red") +
-  annotate("text", x=(millen_min + 6), y=85000,  label="Millenials") 
+  annotate("text", x=(millen_min + 7), y=85000,  label="Millenials") +
+  # avocado toast
+  annotate("rect", xmin=genz_min, xmax=genz_max, ymin=0, ymax=89750, alpha=0.1, fill="orange") +
+  annotate("text", x=(genz_min + 5), y=85000,  label="GenZ") 
   
 
 plot_age_groupdist_BC_max_shade
@@ -678,7 +685,7 @@ ch_65plus
 ch_65plus +
   theme_BCStats +
 #  scale_colour_manual(values=palette_BCStats) +
-  labs(title = "British Columbia: population, ages 65+ & 85+",
+  labs(title = "British Columbia: population, ages 65+ & 80+",
        subtitle = glue('{year_min}–{year_max_proj}'),
        y = "population", x = "",
        caption = txt_caption2) +
@@ -692,7 +699,7 @@ ch_65plus +
 #  ) +
   theme(legend.position = "none") +
   annotate("text", x=1990, y=500000, label = "65+", colour =  "#234275", fontface = 2) +
-  annotate("text", x=2030, y=500000, label = "80+", colour =  "#E3A82B", fontface = 2) +
+  annotate("text", x=2015, y=300000, label = "80+", colour =  "#E3A82B", fontface = 2) +
 #  
   # projection box
   annotate("rect", xmin=as.numeric(year_max), xmax=as.numeric(year_max_proj), ymin=0, ymax=1750000, alpha=0.1, fill="blue") +
