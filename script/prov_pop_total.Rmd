@@ -1,0 +1,139 @@
+---
+title: "Canadian population by province"
+author: "Martin Monkman"
+date: "17/03/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+```{r}
+library(tidyverse)
+library(cansim)
+```
+
+
+
+Statistics Canada. Table 17-10-0009-01  Population estimates, quarterly
+DOI: https://doi.org/10.25318/1710000901-eng
+Source:  https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710000901
+
+
+```{r datapasta}
+
+prov_pop <-
+  
+  tibble::tribble(
+    ~ "geography",
+    ~ "Q4 2019",
+    ~ "Q1 2020",
+    ~ "Q2 2020",
+    ~ "Q3 2020",
+    ~ "Q4 2020",
+    "Canada(map)",
+    37802043,
+    37899277,
+    37979854,
+    38005238,
+    38008005,
+    "Newfoundland and Labrador(map)",
+    524137,
+    523631,
+    522994,
+    522103,
+    520998,
+    "Prince Edward Island(map)",
+    158334,
+    158629,
+    159249,
+    159625,
+    159713,
+    "Nova Scotia(map)",
+    975231,
+    975898,
+    977043,
+    979351,
+    979115,
+    "New Brunswick(map)",
+    780154,
+    780040,
+    781024,
+    781476,
+    781315,
+    "Quebec(map)",
+    8540429,
+    8556650,
+    8572054,
+    8574571,
+    8575779,
+    "Ontario(map)",
+    14637880,
+    14689075,
+    14723497,
+    14734014,
+    14733119,
+    "Manitoba(map)",
+    1373574,
+    1377004,
+    1378818,
+    1379263,
+    1379584,
+    "Saskatchewan(map)",
+    1176272,
+    1179154,
+    1179618,
+    1178681,
+    1177884,
+    "Alberta(map)",
+    4384968,
+    4402045,
+    4417006,
+    4421876,
+    4428112,
+    "British Columbia(map)",
+    5125659,
+    5131575,
+    5142404,
+    5147712,
+    5145851,
+    "Yukon(map)",
+    41668,
+    41731,
+    41980,
+    42052,
+    42176,
+    "Northwest Territories5(map)",
+    45100,
+    45119,
+    45201,
+    45161,
+    45074,
+    "Nunavut5(map)",
+    38637,
+    38726,
+    38966,
+    39353,
+    39285
+  )
+
+```
+
+
+```{r get_cansim}
+prov_pop <- cansim::get_cansim("17-10-0009-01")
+```
+
+https://www150.statcan.gc.ca/n1/en/subjects/population_and_demography/population_estimates/annual_subprovincial_estimates
+
+https://www150.statcan.gc.ca/n1/daily-quotidien/210114/dq210114a-eng.htm
+
+https://www150.statcan.gc.ca/n1/en/catalogue/91-214-X
+
+https://www150.statcan.gc.ca/n1/pub/71-607-x/71-607-x2020003-eng.htm
+
+
