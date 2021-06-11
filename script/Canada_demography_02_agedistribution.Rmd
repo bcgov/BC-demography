@@ -75,7 +75,18 @@ txt_caption2 <- "Source: Statistics Canada, CANSIM Tables 17-10-0005-01 & 17-10-
 
 ## Plot the age distribution of British Columbia & Canada, 1971–present
 
-### data
+
+### data: estimates
+
+[Population estimates on July 1st, by age and sex](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710000501&pickMembers%5B0%5D=1.1&pickMembers%5B1%5D=2.1&cubeTimeFrame.startYear=2016&cubeTimeFrame.endYear=2020&referencePeriods=20160101%2C20200101)
+Frequency: Annual
+
+Table: 17-10-0005-01 (formerly CANSIM 051-0001)
+
+Geography: Canada, Province or territory
+
+
+### data: projections
 
 
 Source:
