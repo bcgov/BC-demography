@@ -1,0 +1,215 @@
+---
+title: "Canada_demography_02_agedistribution"
+author: "Martin Monkman"
+date: "2021-06-11"
+output: html_document
+---
+<!--
+Copyright 2020 Province of British Columbia
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and limitations under the License.
+-->
+
+
+```{r setup, echo=FALSE, message_group=FALSE}
+
+# tidyverse
+library(tidyverse)
+
+# utilities
+library(cansim)
+library(glue)
+library(here)
+library(janitor)
+#
+# tables
+library(xtable)
+#
+# plotting
+library(gganimate)
+library(zoo)
+library(scales)
+#
+
+# PLOTTING ESSENTIALS
+
+# create a chart theme & colour palette for use in ggplot2
+# this theme is the basic background for a BC Stats chart
+#
+theme_BCStats <- 
+  theme_bw() +
+  theme(
+    panel.border = element_rect(colour="white"),
+    axis.line = element_line(colour="black"),
+#    legend.position=c(1,0), 
+#    legend.justification=c(1,0),
+    legend.title = element_text(size=12),
+    legend.text = element_text(size=11),
+    axis.title = element_text(size=16),
+    axis.text = element_text(size=16),
+    plot.title = element_text(size=18)
+  )
+#
+
+# colour palette for BC Stats charts (use with scale_colour_manual)
+palette_BCStats <- c("#234275", "#E3A82B", "#26BDEF", "#11CC33", "#D3E2ED", "8A8A8A")
+
+# grayscale for fill (use with scale_fill_manual)
+palette_BCStats_fill <- c("#3F3F3F", "#ABABAB", "#DFDFDF", "#969696", "#838383", "8A8A8A")
+
+
+#
+txt_caption <- "Source: Statistics Canada, CANSIM Table 17-10-0005-01"
+txt_caption2 <- "Source: Statistics Canada, CANSIM Tables 17-10-0005-01 & 17-10-0057-01"
+
+
+```
+
+## Plot the age distribution of British Columbia & Canada, 1971–present
+
+### data
+
+
+Source:
+Statistics Canada, CANSIM 
+[Projected population, by projection scenario, age and sex, as of July 1 (x 1,000)](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710005701)
+Frequency: Annual
+
+Table: 17-10-0057-01 (formerly CANSIM 052-0005)
+
+
+Read and clean data
+
+```{r read_data, echo=FALSE, message_group=FALSE}
+
+# read the data
+df_1710005701 <- get_cansim("17-10-0057-01")
+
+df_1710005701 <- clean_names(df_1710005701)
+
+df_1710005701_med <- df_1710005701 %>% 
+  filter(projection_scenario == "Projection scenario M1: medium-growth",
+         sex == "Both sexes",
+         geo == "Canada") %>% 
+  mutate(age_group = as_factor(age_group))
+
+```
+
+
+
+
+
+Filter so that only single year categories remain (i.e. age 0, 1, 2, etc)
+
+**Note:** the years up to and including 2000 include "90 years and over" as the oldest category; in 2001 the years 90-99 were included as single years, and the oldest category became "100 years and over". To make a data frame with single categories
+
+* for those years, the 90+ category needs to be reframed as the single year "90"
+
+* for the other years, the 90+ category needs to be dropped entirely
+
+```{r}
+# age category values to drop
+drop.age_group.vals_1 <- c("All ages", "0 to 4 years", "5 to 9 years",
+                   "10 to 14 years", "15 to 19 years", 
+                   "20 to 24 years", "25 to 29 years", 
+                   "30 to 34 years", "35 to 39 years", 
+                   "40 to 44 years", "45 to 49 years", 
+                   "50 to 54 years", "55 to 59 years", 
+                   "60 to 64 years", "65 to 69 years", 
+                   "70 to 74 years", "75 to 79 years", 
+                   "80 to 84 years", "85 to 89 years", 
+                   "90 to 94 years", "95 to 99 years",
+                   "0 to 14 years", "0 to 15 years", "0 to 16 years", "0 to 17 years",
+                   "15 to 49 years", "15 to 64 years", "16 to 64 years", "17 to 64 years",
+                   "18 years and over", "18 to 64 years", "18 to 24 years", "25 to 44 years",
+                   "45 to 64 years", "65 years and over", 
+                   "Median age", "Average age")
+
+df_single <- df_1710005701_med %>% 
+  filter(!age_group %in% drop.age_group.vals_1)
+
+
+#write_rds(df_single, "../data_output/Canada__proj_age_single.rds")
+```
+
+
+
+```{r}
+# age category values to keep
+age_group.vals_1 <- c("0 to 4 years", "5 to 9 years",
+                   "10 to 14 years", "15 to 19 years", 
+                   "20 to 24 years", "25 to 29 years", 
+                   "30 to 34 years", "35 to 39 years", 
+                   "40 to 44 years", "45 to 49 years", 
+                   "50 to 54 years", "55 to 59 years", 
+                   "60 to 64 years", "65 to 69 years", 
+                   "70 to 74 years", "75 to 79 years", 
+                   "80 to 84 years", "85 to 89 years", 
+                   "90 to 94 years", "95 to 99 years",
+                   "100 years and over")
+
+age_group.young <- c("0 to 4 years", "5 to 9 years",
+                   "10 to 14 years")
+
+age_group.old <- c("65 to 69 years", 
+                   "70 to 74 years", "75 to 79 years", 
+                   "80 to 84 years", "85 to 89 years", 
+                   "90 to 94 years", "95 to 99 years",
+                   "100 years and over")
+
+
+df_5yr_grp <- df_1710005701_med %>% 
+  filter(age_group %in% age_group.vals_1)
+
+df_5yr_grp <- df_5yr_grp %>% 
+  mutate(age_grp_3 = case_when(
+    age_group %in% age_group.young ~ "0-14",
+    age_group %in% age_group.old ~ "65+",
+    TRUE ~ NA_character_
+  ))
+
+df_5yr_grp %>% 
+  filter(ref_date == 2020) %>% 
+  group_by(ref_date, age_group, age_grp_3) %>% 
+  summarise(population = sum(`value`)) 
+
+```
+
+
+```{r}
+
+df_5yr_grp %>% 
+  filter(ref_date == 2020) %>% 
+  group_by(age_group) %>% 
+  summarise(population = sum(`value`)) %>% 
+  mutate(pct_pop = population / sum(population)) %>% 
+  summarise(sum(population),
+            sum(pct_pop))
+
+
+df_5yr_grp %>% 
+  filter(ref_date == 2020) %>% 
+  group_by(age_group) %>% 
+  summarise(population = sum(`value`)) %>% 
+  mutate(pct_pop = population / sum(population)) 
+
+df_5yr_grp %>% 
+  filter(ref_date == 2020) %>% 
+  group_by(age_grp_3) %>% 
+  summarise(population = sum(`value`)) %>% 
+  mutate(pct_pop = population / sum(population)) 
+
+
+#write_rds(df_single, "../data_output/Canada__proj_age_single.rds")
+```
+
+
+-30-
