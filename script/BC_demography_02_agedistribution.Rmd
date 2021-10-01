@@ -315,7 +315,7 @@ ggsave(plot_file_name, width=9, height=6)
 
 # baby boom (in Canada): 1946 - 1965
 # gen X: 1966 - 1980
-# millenials: 1981 - 1995
+# millennials: 1981 - 1995
 # gen X: 1996 - 2001
 
 # https://www.pewresearch.org/fact-tank/2019/01/17/where-millennials-end-and-generation-z-begins/
@@ -340,7 +340,7 @@ plot_age_groupdist_BC_max_shade <- plot_age_groupdist_BC_max +
   annotate("text", x=(genx_min + 5), y=85000,  label="GenX") +
   # avocado toast
   annotate("rect", xmin=millen_min, xmax=millen_max, ymin=0, ymax=89750, alpha=0.1, fill="red") +
-  annotate("text", x=(millen_min + 7), y=85000,  label="Millenials") +
+  annotate("text", x=(millen_min + 7), y=85000,  label="Millennials") +
   # post-avocado toast
   annotate("rect", xmin=genz_min, xmax=genz_max, ymin=0, ymax=89750, alpha=0.1, fill="orange") +
   annotate("text", x=(genz_min + 5), y=85000,  label="GenZ") 
