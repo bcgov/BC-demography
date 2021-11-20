@@ -105,7 +105,7 @@ Geography: Province or territory, Census subdivision
 
 ```{r}
 
-# read the data
+# write the data
  
 
 write_rds(df_1710014201, "../data_source/df_1710014201.rds")
