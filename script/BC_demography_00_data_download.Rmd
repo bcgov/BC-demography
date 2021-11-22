@@ -102,17 +102,23 @@ Release date: 2021-01-14
 Geography: Province or territory, Census subdivision
 
 
-
 ```{r}
 
-# write the data
- 
+
+# read the data
+df_1710014201 <- get_cansim("17-10-0142-01")
+
+df_1710014201 <- clean_names(df_1710014201)
+
+df_1710014201 <- df_1710014201 %>% 
+  mutate(ref_date_year = as.integer(ref_date))
 
 write_rds(df_1710014201, "../data_source/df_1710014201.rds")
 
 
 
 ```
+
 
 
 

@@ -70,6 +70,15 @@ theme_BCStats <-
 palette_BCStats <- c("#234275", "#E3A82B", "#26BDEF", "#11CC33", "#D3E2ED", "8A8A8A")
 
 
+# ---
+# CAGR funtion to calculate annual average growth
+
+
+fun_cagr <- function(datavar, n) {
+  mutate(cagr = ((datavar / lag(datavar, n)) ^ (1 / n)) - 1)
+  return(datavar)
+}
+
 ```
 
 
@@ -87,42 +96,64 @@ ls.str(df_1710014201)
 
 
 
-```{r}
+```{r data_filter_bc}
 # filter for British Columbia
 
 df_bc_pop <- df_1710014201 %>% 
   filter(str_detect(geo, "British Columbia")) %>% 
-  mutate(csd = str_sub(dguid, start = 10, end = 13))
+  mutate(cd = str_sub(dguid, start = 10, end = 13), 
+         csd = str_sub(dguid, start = 12, end = 16))
 
 df_bc_pop
 
 #write_rds(df_bc_pop, "../data_source/df_1710014201_bc_csd.rds")
 
 df_bc_pop <- df_bc_pop %>% 
-  select(ref_date, geo, csd, value)
+  select(ref_date_year, geo, cd, csd, value)
 
 df_bc_pop
 
 ```
 
+quick look--are the csd values unique to the geo?
+
+```{r}
+df_bc_pop %>% 
+  filter(ref_date_year == 2020,
+         cd == "5917") %>% 
+  arrange(csd)
+```
+
+
+
+
 
 ## Boundaries Commission
 
-BC total
+### BC total
 
-```{r}
-df_bc_total <- df_bc_pop %>% 
-  filter(geo == "British Columbia") %>% 
-  # filter for relevant years (previous commissions)
-  filter(ref_date %in% c("2008", "2015", "2020")) %>% 
-  mutate(pop_change = value - lag(value, 2),
-         pop_change_pct = round((pop_change / lag(value, 2) * 100), 2))
-  
-df_bc_total
+```{r cagr_bc}
+
+# Electoral Boundary Commission years
+ebc_years <- c(2008, 2015, 2020)
+
+df_bc_pop %>%
+  # filter for geography & relevant years (previous commissions)
+  filter(geo == "British Columbia") %>%
+  filter(ref_date_year %in% ebc_years) %>%
+  #
+  select(geo, ref_date_year, value) %>%
+  # total growth between commissions
+  mutate(pop_change = value - lag(value, 1),
+         pop_change_pct = round((pop_change / lag(value, 1) * 100), 2)) %>%
+# compound annual growth rate (CAGR) between commissions
+  mutate(cagr_years = ref_date_year - lag(ref_date_year, 1)) %>%
+  mutate(cagr = (((value / lag(value, 1)) ^ (1 / cagr_years) - 1) * 100))
 
 ```
 
-CSD
+
+### CSD
 
 ```{r}
 
@@ -132,8 +163,8 @@ df_bc_pop2 <- df_bc_pop %>%
   filter(geo != "Census subdivisions with 5,000-plus population, British Columbia") %>% 
   filter(geo != "Census subdivisions with population under 5,000, British Columbia") %>% 
   # filter for relevant years (previous commissions)
-  filter(ref_date %in% c("2008", "2015", "2020")) %>% 
-  arrange(geo) 
+  filter(ref_date_year %in% ebc_years) %>% 
+  arrange(csd) 
 
 df_bc_pop2
 
@@ -141,31 +172,40 @@ df_bc_pop2
 
 
 ```{r}
-df_bc_pop2 %>% 
+df_bc_pop2 <- df_bc_pop2 %>% 
   group_by(geo) %>% 
-  # change since last commission
+  # total growth between commissions
   mutate(pop_change = value - lag(value, 1),
-         pop_change_pct = round((pop_change / lag(value, 1) * 100), 2)) %>% 
-  ungroup()
+         pop_change_pct = round((pop_change / lag(value, 1) * 100), 2)) %>%
+# compound annual growth rate (CAGR) between commissions
+  mutate(cagr_years = ref_date_year - lag(ref_date_year, 1)) %>%
+  mutate(cagr = (((value / lag(value, 1)) ^ (1 / cagr_years) - 1) * 100))
 
+df_bc_pop2
 ```
 
-...CSD might be more useful
+make table where population in 2020 is in excess of 10000
 
 
 ```{r}
-df_bc_csd <- df_bc_pop2 %>% 
-  group_by(csd, ref_date) %>% 
-  summarise(csd_pop = sum(value)) %>% 
-  ungroup() %>% 
-  group_by(csd) %>% 
-  # change since last commission
-  mutate(pop_change = csd_pop - lag(csd_pop, 1),
-         pop_change_pct = round((pop_change / lag(csd_pop, 1) * 100), 2)) %>% 
-  ungroup()
-  
+df_pop_10k <- df_bc_pop2 %>% 
+  filter(ref_date_year == 2020) %>% 
+  filter(value >= 10000) %>% 
+  arrange(csd)
 
-df_bc_csd
+df_pop_10k
+
+```
+
+use semi-join to filter main table (so only those CSDs with 2020 pop > 10000 remain)
+
+```{r}
+
+df_bc_pop3 <- df_bc_pop2 %>% 
+  semi_join(df_pop_10k, by = "geo")
+
+
+df_bc_pop3
 
 ```
 
