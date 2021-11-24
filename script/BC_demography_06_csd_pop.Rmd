@@ -210,6 +210,25 @@ df_bc_pop3
 ```
 
 
+### CD
+
+```{r}
+df_bc_pop2 %>% 
+  mutate(cagr_years = ref_date_year - lag(ref_date_year, 1))
+
+df_bc_pop2 %>% 
+  group_by(cd, ref_date_year) %>% 
+  summarise(value = sum(value)) %>% 
+  #
+  group_by(cd) %>% 
+  # total growth between commissions
+  mutate(pop_change = value - lag(value, 1),
+         pop_change_pct = round((pop_change / lag(value, 1) * 100), 2)) %>%
+# compound annual growth rate (CAGR) between commissions
+  mutate(cagr_years = ref_date_year - lag(ref_date_year, 1)) %>%
+  mutate(cagr = (((value / lag(value, 1)) ^ (1 / cagr_years) - 1) * 100))
+  
+```
 
 
 

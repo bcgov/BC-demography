@@ -1,0 +1,359 @@
+---
+title: "BC demography"
+author: "Martin Monkman"
+date: "2021-11-19"
+output: html_document
+---
+<!--
+Copyright 2020 & 2021 Province of British Columbia
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and limitations under the License.
+-->
+
+
+## British Columbia Population: Regional Districts
+
+### data
+
+BC Stats population app
+
+https://bcstats.shinyapps.io/popApp/
+
+
+```{r setup, echo=FALSE, message=FALSE}
+
+# load the tidyverse packages
+library(tidyverse)
+library(lubridate)
+
+# utilities
+library(glue)
+library(here)
+library(janitor)
+#
+
+# ----
+# create a chart theme & colour palette for use in ggplot2
+# this theme is the basic background for a BC Stats chart
+#
+theme_BCStats <- 
+  theme_bw() +
+  theme(
+    panel.border = element_rect(colour="white"),
+    axis.line = element_line(colour="black"),
+    legend.position=c(1,0), 
+    legend.justification=c(1,0),
+    legend.title = element_text(size=12),
+    legend.text = element_text(size=11),
+    axis.title = element_text(size=12),
+    axis.text = element_text(size=12)
+  )
+#
+
+# colour palette for BC Stats charts
+
+palette_BCStats <- c("#234275", "#E3A82B", "#26BDEF", "#11CC33", "#D3E2ED", "8A8A8A")
+
+
+# ---
+# CAGR funtion to calculate annual average growth
+
+
+fun_cagr <- function(datavar, n) {
+  mutate(cagr = ((datavar / lag(datavar, n)) ^ (1 / n)) - 1)
+  return(datavar)
+}
+
+```
+
+
+
+
+
+```{r read_data}
+
+# read the data
+df_bc_pop_rd <- read_csv("../data_source/Population_Projections_regional_district_2021-11-23.csv")
+
+df_bc_pop_rd <- df_bc_pop_rd %>% 
+  janitor::clean_names()  %>% 
+  select(ref_date_year = year, region, geo = regional_district, value = total)
+
+
+ls.str(df_bc_pop_rd)
+
+
+write_rds(df_bc_pop, "../data_source/df_bc_pop_rd.rds")
+
+```
+
+
+
+
+
+
+## Boundaries Commission
+
+### BC total
+
+```{r cagr_bc}
+
+# Electoral Boundary Commission years
+ebc_years <- c(2008, 2015, 2021)
+
+df_bc_pop_rd %>%
+  # filter for geography & relevant years (previous commissions)
+  filter(geo == "British Columbia") %>%
+  filter(ref_date_year %in% ebc_years) %>%
+  #
+  select(geo, ref_date_year, value) %>%
+  # total growth between commissions
+  mutate(pop_change = value - lag(value, 1),
+         pop_change_pct = round((pop_change / lag(value, 1) * 100), 2)) %>%
+# compound annual growth rate (CAGR) between commissions
+  mutate(cagr_years = ref_date_year - lag(ref_date_year, 1)) %>%
+  mutate(cagr = (((value / lag(value, 1)) ^ (1 / cagr_years) - 1) * 100))
+
+```
+
+
+
+### CD
+
+
+```{r data_filter_bc}
+# filter for British Columbia
+
+df_bc_pop2 <- df_bc_pop_rd %>% 
+  filter(geo != "British Columbia") 
+df_bc_pop2
+
+```
+
+add assorted values
+
+(index: see http://yetanothermathprogrammingconsultant.blogspot.com/2017/05/indexing-economic-time-series-in-r.html)
+
+```{r}
+
+# Electoral Boundary Commission years
+ebc_years <- c(2008, 2015, 2021)
+
+df_bc_pop3 <- df_bc_pop2 %>% 
+  filter(ref_date_year %in% ebc_years) %>% 
+  arrange(geo) %>% 
+  #
+  group_by(geo) %>% 
+  # total growth between commissions
+  mutate(pop_change = value - lag(value, 1),
+         pop_change_pct = round((pop_change / lag(value, 1) * 100), 2)) %>%
+# compound annual growth rate (CAGR) between commissions
+  mutate(cagr_years = ref_date_year - lag(ref_date_year, 1)) %>%
+  mutate(cagr = (((value / lag(value, 1)) ^ (1 / cagr_years) - 1) * 100)) %>% 
+  group_by(geo) %>% 
+  mutate(index_2008 = 100 * value / first(value)) %>% 
+  ungroup()
+
+df_bc_pop3  
+```
+
+semi-join to filter top 5
+
+
+```{r}
+df_top5 <- df_bc_pop3 %>% 
+  filter(ref_date_year == 2021) %>% 
+  slice_max(index_2008, n = 5) %>% 
+  arrange(desc(index_2008))
+
+df_top5
+
+df_bot5 <- df_bc_pop3 %>% 
+  filter(ref_date_year == 2021) %>% 
+  slice_min(index_2008, n = 5) %>% 
+  arrange(desc(index_2008))
+
+df_bot5
+
+```
+
+use semi-join to filter main table (so only those CSDs with 2020 pop > 10000 remain)
+
+```{r}
+
+df_bc_pop3 %>% 
+  semi_join(df_top5, by = "geo") %>% 
+  arrange(region)
+
+
+```
+
+
+```{r}
+
+df_bc_pop3 %>% 
+  semi_join(df_top5, by = "geo") %>% 
+  filter(ref_date_year %in% c(2015, 2021)) %>% 
+  arrange(region) %>% 
+  ggplot(aes(x = index_2008, y = geo, colour = ref_date_year)) +
+    geom_point() +
+    geom_segment(aes(yend = geo), xend = 0) 
+
+```
+
+### dumbbell plot
+
+
+from the {ggalt} package
+
+https://yonicd.github.io/ggalt/reference/geom_dumbbell.html
+
+```{r}
+library(ggalt)
+
+df <- data.frame(trt=LETTERS[1:5], l=c(20, 40, 10, 30, 50), r=c(70, 50, 30, 60, 80))
+
+ggplot(df, aes(y=trt, x=l, xend=r)) +
+  geom_dumbbell(size=3, color="#e3e2e1",
+                colour_x = "#5b8124", colour_xend = "#bad744",
+                dot_guide=TRUE, dot_guide_size=0.25) +
+  labs(x=NULL, y=NULL, title="ggplot2 geom_dumbbell with dot guide") +
+  theme_minimal() +
+  theme(panel.grid.major.x=element_line(size=0.05))
+```
+
+
+#### top 5 RDs
+
+
+```{r}
+
+# filter and reshape
+df_bc_pop3 %>% 
+  semi_join(df_top5, by = "geo") %>% 
+  mutate(ref_date_year = as.character(ref_date_year)) %>% 
+  filter(ref_date_year %in% c("2015", "2021")) %>% 
+  pivot_wider(geo, names_from = ref_date_year, values_from = index_2008) %>%
+  rename("year_2015" = `2015`,
+         "year_2021" = `2021`) %>% 
+#
+ggplot(aes(y=geo, x=year_2015, xend=year_2021)) +
+  geom_dumbbell(size=3, color="#e3e2e1",
+                colour_x = "#5b8124", colour_xend = "#bad744",
+                dot_guide=TRUE, dot_guide_size=0.25) +
+  labs(x="Index, 2011 = 100", 
+       y=NULL, 
+       title="BC Regional District growth, 2015 & 2021",
+       subtitle = "") +
+  xlim(100, 130) +
+  theme_minimal() +
+  theme(panel.grid.major.x=element_line(size=0.05))
+
+```
+
+```{r}
+
+# filter and reshape
+pl_top <- df_bc_pop3 %>% 
+  semi_join(df_top5, by = "geo") %>% 
+  mutate(ref_date_year = as.character(ref_date_year)) %>% 
+  filter(ref_date_year %in% c("2015", "2021")) %>% 
+  pivot_wider(geo, names_from = ref_date_year, values_from = index_2008) %>%
+  rename("year_2015" = `2015`,
+         "year_2021" = `2021`) %>% 
+#
+ggplot(aes(y=reorder(geo, year_2021), x=year_2015, xend=year_2021)) +
+  geom_vline(aes(xintercept = 100)) +
+  geom_dumbbell(size=3, color="#e3e2e1",
+                colour_x = "#0000ff", colour_xend = "#8B0000",
+                dot_guide=TRUE, dot_guide_size=0.25) +
+  labs(x="Index, 2008 = 100", 
+       y=NULL, 
+       title="BC Regional District growth, 2015 & 2021",
+       subtitle = "Electoral Boundary Commission years") +
+  xlim(80, 130) +
+  theme_minimal() +
+  theme(panel.grid.major.x=element_line(size=0.05))
+
+```
+
+```{r}
+pl_top +
+  annotate(
+    "text",
+    x = 81,
+    y = 1.6,
+    label = "blue dot = 2015",
+    colour = "#0000ff",
+    hjust = 0
+  ) +
+  annotate(
+    "text",
+    x = 81,
+    y = 1.3,
+    label = "red dot = 2021",
+    colour = "#8B0000",
+    hjust = 0
+  )
+
+ggsave("rdgrowth_top5.jpg", device = "jpeg")
+
+```
+
+#### bottom 5 RDs
+
+```{r}
+
+# filter and reshape
+df_bc_pop3 %>% 
+  semi_join(df_bot5, by = "geo") %>% 
+  mutate(ref_date_year = as.character(ref_date_year)) %>% 
+  filter(ref_date_year %in% c("2015", "2021")) %>% 
+  pivot_wider(geo, names_from = ref_date_year, values_from = index_2008) %>%
+  rename("year_2015" = `2015`,
+         "year_2021" = `2021`) %>% 
+#
+ggplot(aes(y=reorder(geo, year_2021), x=year_2015, xend=year_2021)) +
+  geom_vline(aes(xintercept = 100)) +
+  geom_dumbbell(size=3, color="#e3e2e1",
+                colour_x = "#0000ff", colour_xend = "#8B0000",
+                dot_guide=TRUE, dot_guide_size=0.25) +
+  labs(x="Index, 2008 = 100", 
+       y=NULL, 
+       title="BC Regional District growth, 2015 & 2021",
+       subtitle = "Electoral Boundary Commission years") +
+  xlim(80, 130) +
+  theme_minimal() +
+  theme(panel.grid.major.x=element_line(size=0.05)) + 
+  annotate(
+    "text",
+    x = 129,
+    y = 1.6,
+    label = "blue dot = 2015",
+    colour = "#0000ff",
+    hjust = 1
+  ) +
+  annotate(
+    "text",
+    x = 129,
+    y = 1.3,
+    label = "red dot = 2021",
+    colour = "#8B0000",
+    hjust = 1
+  )
+  
+ggsave("rdgrowth_bot5.jpg", device = "jpeg")
+
+```
+
+
+
+-30-
