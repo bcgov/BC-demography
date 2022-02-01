@@ -1,0 +1,302 @@
+---
+title: "BC_demography_02_agedistribution"
+author: "Martin Monkman"
+date: "January 08, 2020"
+output: html_document
+---
+<!--
+Copyright 2020 Province of British Columbia
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and limitations under the License.
+-->
+
+
+```{r setup, echo=FALSE, message_group=FALSE}
+
+# tidyverse
+library(tidyverse)
+
+# utilities
+library(glue)
+library(here)
+library(janitor)
+#
+# tables
+library(xtable)
+#
+# plotting
+library(gganimate)
+library(zoo)
+library(scales)
+#
+
+# PLOTTING ESSENTIALS
+
+# create a chart theme & colour palette for use in ggplot2
+# this theme is the basic background for a BC Stats chart
+#
+theme_BCStats <- 
+  theme_bw() +
+  theme(
+    panel.border = element_rect(colour="white"),
+    axis.line = element_line(colour="black"),
+#    legend.position=c(1,0), 
+#    legend.justification=c(1,0),
+    legend.title = element_text(size=12),
+    legend.text = element_text(size=11),
+    axis.title = element_text(size=16),
+    axis.text = element_text(size=16),
+    plot.title = element_text(size=18)
+  )
+#
+
+# colour palette for BC Stats charts (use with scale_colour_manual)
+palette_BCStats <- c("#234275", "#E3A82B", "#E3A82B", "#11CC33", "#D3E2ED", "8A8A8A")
+
+# grayscale for fill (use with scale_fill_manual)
+palette_BCStats_fill <- c("#3F3F3F", "#ABABAB", "#DFDFDF", "#969696", "#838383", "8A8A8A")
+
+
+#
+txt_caption <- "Source: Statistics Canada, CANSIM Table 17-10-0005-01"
+txt_caption2 <- "Source: Statistics Canada, CANSIM Tables 17-10-0005-01 & 17-10-0057-01"
+
+
+```
+
+## Plot the age distribution of British Columbia & Canada, 1971–present
+
+### data
+
+
+Source:
+Statistics Canada, CANSIM 
+[Population estimates on July 1st, by age and sex](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710000501)
+
+Table: 17-10-0005-01 (formerly CANSIM 051-0001)
+
+The source file contains population for Canada, the provinces and territories, by age (and age group), and by sex, for the years 1976-2020 (as of this writing).
+
+Source file:  (https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710000501)
+
+
+The CANSIM extract requires some carpentry to be useful for the purposes of this plotting. The tidied version becomes a data frame `data_age_groupdistrib_BC_2019`.
+
+**Notes:** 
+
+1. The table originally tabulated the last category as "90 years and over"; starting with 2001 this category was expanded to single years 90 through 99, and a "100 years and over" category was added. Depending on the year(s) of interest, the treatment of the extreme category will vary. 
+
+2. The extreme age_group categories appear for all years, but are empty values. These lead to "parsing failures" when reading the source .csv file.
+
+
+Read and clean data
+
+```{r read_data, echo=FALSE, message_group=FALSE}
+
+# read the data
+#df_1710000501 <- read_rds("../data_source/df_1710000501.rds")
+df_1710000501 <- cansim::get_cansim("17-10-0005-01")
+
+df_1710000501 <- janitor::clean_names(df_1710000501)
+
+df_1710000501
+```
+
+
+
+
+
+Filter so that only single year categories remain (i.e. age 0, 1, 2, etc)
+
+**Note:** the years up to and including 2000 include "90 years and over" as the oldest category; in 2001 the years 90-99 were included as single years, and the oldest category became "100 years and over". To make a data frame with single categories
+
+* for those years, the 90+ category needs to be reframed as the single year "90"
+
+* for the other years, the 90+ category needs to be dropped entirely
+
+```{r}
+
+# # getting the lay of the data
+# ls.str(df_1710000501)
+# 
+# unique(df_1710000501$age_group)
+# unique(df_1710000501$geo)
+# unique(df_1710000501$ref_date)
+# unique(df_1710000501$sex)
+# 
+# df_1710000501 %>% 
+#   filter(sex == "Both sexes",
+# #         age_group == "100 years and over", 
+#          age_group == "99 years", 
+#          geo == "Canada")
+
+
+
+# age category values to drop
+drop.age_group.vals_1 <- c("All ages", "0 to 4 years", "5 to 9 years",
+                   "10 to 14 years", "15 to 19 years", 
+                   "20 to 24 years", "25 to 29 years", 
+                   "30 to 34 years", "35 to 39 years", 
+                   "40 to 44 years", "45 to 49 years", 
+                   "50 to 54 years", "55 to 59 years", 
+                   "60 to 64 years", "65 to 69 years", 
+                   "70 to 74 years", "75 to 79 years", 
+                   "80 to 84 years", "85 to 89 years", 
+                   "90 to 94 years", "95 to 99 years",
+                   "0 to 14 years", "0 to 15 years", "0 to 16 years", "0 to 17 years",
+                   "15 to 49 years", "15 to 64 years", "16 to 64 years", "17 to 64 years",
+                   "18 years and over", "18 to 64 years", "18 to 24 years", "25 to 44 years",
+                   "45 to 64 years", "65 years and over", 
+                   "Median age", "Average age")
+
+df_single <- df_1710000501 %>% 
+  filter(!age_group %in% drop.age_group.vals_1)
+
+df_single_1971 <- df_single %>% 
+  filter(ref_date < 2001) %>% 
+  mutate(age_group.num = gsub(" years", "", age_group)) %>% 
+  mutate(age_group.num = gsub(" year", "", age_group.num)) %>% 
+  mutate(age_group.num = gsub(" and over",  "", age_group.num)) %>% 
+  mutate(age_group.num = as.integer(age_group.num))
+
+df_single_2001 <- df_single %>% 
+  filter(ref_date > 2000) %>% 
+  filter(age_group != "90 years and over") %>% 
+  mutate(age_group.num = gsub(" years", "", age_group)) %>% 
+  mutate(age_group.num = gsub(" year", "", age_group.num)) %>% 
+  mutate(age_group.num = gsub(" and over",  "", age_group.num)) %>% 
+  mutate(age_group.num = as.integer(age_group.num))
+  
+data_age_groupdistrib_single <- rbind(df_single_1971, df_single_2001)  
+
+tail(data_age_groupdistrib_single)
+
+#write_rds(data_age_groupdistrib_single, "../data_output/data_age_groupdistrib_single_1971-2021.rds")
+#data_age_groupdistrib_single <- read_rds("../data_output/data_age_groupdistrib_single.rds")
+```
+
+
+
+```{r}
+
+data_age_groupdistrib_single <- data_age_groupdistrib_single %>% 
+  mutate(ref_date_year = as.integer(ref_date)) %>% 
+  # add pct of year (by geo and sex)
+  group_by(geo, ref_date, sex) %>% 
+  mutate(year_pct = (value / sum(value) * 100)) %>% 
+  ungroup()
+
+# quick test
+data_age_groupdistrib_single %>% 
+  filter(geo == "British Columbia",
+         ref_date == "2021",
+         sex == "Both sexes") %>% 
+  summarise(total_pop = sum(value),
+            total_pct = sum(year_pct))
+
+#write_rds(data_age_groupdistrib_single, "../data_output/data_age_groupdistrib_single.rds")
+#data_age_groupdistrib_single <- read_rds("../data_output/data_age_groupdistrib_single.rds")
+
+
+```
+
+
+
+
+```{r}
+
+# filter for British Columbia, both sexes, most recent year distribution
+
+year_min <- min(data_age_groupdistrib_single$ref_date)
+year_max <- max(data_age_groupdistrib_single$ref_date)
+
+data_age_BC_max <- data_age_groupdistrib_single %>%
+  select(geo, ref_date, sex, age_group,  age_group.num, value, year_pct) %>%
+  filter(geo == "British Columbia") %>%
+  filter(ref_date == year_max) %>%
+  filter(sex != "Both sexes")
+
+#write_rds(data_age_groupdistrib_BC_max, "../data_source/data_age_groupdistrib_BC_max.rds")
+#data_age_groupdistrib_BC_max <- read_rds("../data_source/data_age_groupdistrib_BC_max.rds")
+
+
+```
+
+### Plot: population pyramid, British Columbia `r year_max`
+
+This set of charts shows the distribution of the B.C. population by sex, by one year age_group groups.
+
+The first group shows the absolute number of people, and the second shows the percentage_group of the population in each group (useful for comparisons across time).
+
+
+The first version of the plot is a basic version. The second version adds an assortment of formatting:
+
+* axis length and grid specifications
+* axis titles
+* chart title, subtitle, and source
+
+
+
+
+```{r}
+
+pl_bc_pyramid <- ggplot(data_age_BC_max, aes(x = age_group.num, fill = sex,
+                 y = ifelse(test = sex == "Males",
+                            yes = -value, no = value))) + 
+  geom_col() +
+  scale_y_continuous(labels = abs, 
+                     limits = max(data_age_BC_max$value) * c(-1,1),
+                     breaks = seq(-40000, 40000, by = 10000)) +
+  coord_flip()
+
+pl_bc_pyramid
+```
+
+
+
+```{r}
+
+pl_bc_pyramid + 
+#  theme_BCStats +
+  scale_fill_manual(values=palette_BCStats) +
+  scale_x_continuous(breaks = seq(0, 100, 10)) +
+  labs(title = "British Columbia: age distribution",
+       subtitle = year_max,
+       y = "population", x = "age",
+       caption = txt_caption) +
+  theme(legend.position="bottom")
+
+plot_file_name <- glue('../plot_images/plot_bc_pyramid_{year_max}.png')
+#ggsave(plot_file_name, width=9, height=6)
+ggsave(plot_file_name, width=6, height=6)
+
+
+```
+
+
+
+```{r}
+# save the plot as a png file
+ggsave("../plot_images/plot_bc_pyramid_2021.png", width=9, height=6)
+
+
+```
+
+
+## Summary statistics
+
+Questions:
+
+- what percentage_group of British Columbians are 65 and older?
+- how many school-age_group children are there?
+- when was the peak in school age_group children?
+
+-30-
